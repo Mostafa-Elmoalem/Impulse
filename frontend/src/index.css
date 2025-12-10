@@ -1,5 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* الألوان المستوحاة من صفحة الدخول */
+  --primary-color: #512da8;
+  --primary-gradient: linear-gradient(to right, #5c6bc0, #512da8);
+  --secondary-color: #5c6bc0;
+  --bg-color: #e0e0e0;
+  --surface-color: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --danger-color: #e74c3c;
+  --success-color: #2ecc71;
+  --warning-color: #f1c40f;
+
+  /* الأشكال والأبعاد */
+  --border-radius-lg: 30px;
+  /* للكروت الكبيرة */
+  --border-radius-md: 15px;
+  /* للأزرار والعناصر المتوسطة */
+  --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+  --sidebar-width: 280px;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* تنسيق شريط التمرير (Scrollbar) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color);
 }
