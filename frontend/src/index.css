@@ -1,9 +1,12 @@
+/* ✅ 1. الـ Import يجب أن يكون في البداية تماماً */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* ✅ 2. بعده تأتي توجيهات Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-
+/* ✅ 3. ثم باقي التنسيقات */
 :root {
   /* الألوان المستوحاة من صفحة الدخول */
   --primary-color: #512da8;
@@ -19,9 +22,7 @@
 
   /* الأشكال والأبعاد */
   --border-radius-lg: 30px;
-  /* للكروت الكبيرة */
   --border-radius-md: 15px;
-  /* للأزرار والعناصر المتوسطة */
   --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.35);
   --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
   --sidebar-width: 280px;
@@ -34,28 +35,5 @@
   font-family: 'Montserrat', sans-serif;
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-primary);
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* تنسيق شريط التمرير (Scrollbar) */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
-}
+/* ملاحظة: قمت بإزالة body من هنا لأننا وضعنا تنسيقه في Auth.css
+   لصفحة اللوجين، وسنضع تنسيقاً عاماً مختلفاً للتطبيق لاحقاً */
