@@ -3,16 +3,10 @@ import { useState, useEffect } from 'react';
 import { Plus, Moon, Sun } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { format, addDays } from 'date-fns';
-import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 
 export const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const user = useAuthStore((state) => state.user);
-
-  // ✅ TODO: Replace with real API call when backend implements GET /dashboard/score
-  const dailyScore = 0; // Placeholder
-  const dailyTarget = 100;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -31,26 +25,23 @@ export const Header = () => {
         </p>
       </div>
 
-      {/* Center: Time & Score */}
+      {/* Center: Time */}
       <div className="flex flex-col items-center gap-1">
         <div className="text-2xl font-mono font-semibold text-brand-600 dark:text-brand-400">
           {format(currentTime, 'h:mm a')}
-        </div>
-        <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          Score: <span className="text-brand-600 dark:text-brand-400 font-bold">{dailyScore}/{dailyTarget}</span> 🎯
         </div>
       </div>
 
       {/* Right: Actions */}
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
           aria-label="Toggle dark mode"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
-        
+
         <Button variant="primary" leftIcon={<Plus size={18} />}>
           Add New Task
         </Button>

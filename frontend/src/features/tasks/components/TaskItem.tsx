@@ -4,14 +4,15 @@ import { Task } from '../types';
 import { useToggleTaskDone, useDeleteTask } from '../hooks/useTasks';
 import { cn } from '@/shared/utils/cn';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
   onEdit?: (task: Task) => void;
 }
 
-export const TaskItem = React.memo(
-  ({ task, onEdit }: TaskItemProps) => {
+export const TaskItem = React.memo<TaskItemProps>(
+  ({ task, onEdit }) => {
     const toggleDone = useToggleTaskDone();
     const deleteTask = useDeleteTask();
 
@@ -31,23 +32,28 @@ export const TaskItem = React.memo(
       high: 'bg-warning-100 text-warning-700',
       urgent: 'bg-danger-100 text-danger-700',
     };
+    const isDeleting = deleteTask.isPending; // ✅ Add this
+    const isToggling = toggleDone.isPending; // ✅ Add this
 
     return (
       <div
         className={cn(
           'p-4 border rounded-xl shadow-sm bg-white hover:shadow-md transition-all duration-200',
-          task.done && 'opacity-60 bg-gray-50'
+          task.done && 'opacity-60 bg-gray-50',
+          isDeleting && 'opacity-50 pointer-events-none'
         )}
       >
         <div className="flex items-start gap-3">
           {/* Checkbox */}
           <button
             onClick={handleToggle}
+            disabled={isToggling}
             className={cn(
               'mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
               task.done
                 ? 'bg-success-500 border-success-500'
-                : 'border-gray-300 hover:border-brand-500'
+                : 'border-gray-300 hover:border-brand-500',
+                isToggling && 'cursor-wait'
             )}
           >
             {task.done && (
@@ -104,8 +110,7 @@ export const TaskItem = React.memo(
 
               {/* Date */}
               <span className="text-xs text-gray-500">
-                {format(new Date(task.day), 'MMM d, yyyy')}
-              </span>
+                  {task.day ? format(new Date(task.day), 'MMM d, yyyy') : 'No date'}              </span>
 
               {/* Points */}
               {task.points !== undefined && (

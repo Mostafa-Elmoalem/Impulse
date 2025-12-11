@@ -1,30 +1,38 @@
 // src/features/tasks/pages/TasksPage.tsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { Input } from '@/shared/components/ui/Input';
 import { getTasks } from '../api/taskApi';
-import type { Task } from '../types';
+import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { TaskItem } from '../components/TaskItem';
-import { toast } from 'sonner';
+import { TaskFormModal } from '../components/TaskFormModal';
+import type { Task } from '../types';
 
 export const TasksPage = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    // ✅ TODO: Backend needs to implement GET /api/tasks endpoint
-    // Currently returns 401/403 because endpoint doesn't exist
-    getTasks()
-      .then(setTasks)
-      .catch((err) => {
-        console.error("Failed to load tasks", err);
-        setError(err.message);
-        toast.error('Failed to load tasks. Backend endpoint may not be implemented yet.');
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: QUERY_KEYS.TASKS,
+    queryFn: getTasks,
+  });
+
+  const filteredTasks = tasks.filter(task =>
+    task.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTask(undefined);
+  };
 
   return (
     <div className="space-y-6">
@@ -35,18 +43,20 @@ export const TasksPage = () => {
             Manage your daily tasks and goals
           </p>
         </div>
-        <Button leftIcon={<Plus size={20} />}>Add Task</Button>
+        <Button leftIcon={<Plus size={20} />} onClick={() => setIsModalOpen(true)}>
+          Add Task
+        </Button>
       </header>
 
-      {/* Search Bar */}
       <div className="flex gap-4">
-        <Input 
-          placeholder="Search tasks..." 
+        <Input
+          placeholder="Search tasks..."
           leftIcon={<Search size={18} />}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      {/* Task List */}
       <div className="space-y-4">
         {isLoading ? (
           <p className="text-gray-500">Loading tasks...</p>
@@ -56,17 +66,25 @@ export const TasksPage = () => {
               ⚠️ <strong>Backend TODO:</strong> Implement GET /api/tasks endpoint
             </p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-              Error: {error}
+              Error: {(error as Error).message}
             </p>
           </div>
-        ) : tasks.length === 0 ? (
+        ) : filteredTasks.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
-            No tasks yet. Click "Add Task" to create one.
+            {searchQuery ? 'No tasks match your search.' : 'No tasks yet. Click "Add Task" to create one.'}
           </p>
         ) : (
-          tasks.map((task) => <TaskItem key={task.id} task={task} />)
+          filteredTasks.map((task) => (
+            <TaskItem key={task.id} task={task} onEdit={handleEdit} />
+          ))
         )}
       </div>
+
+      <TaskFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        task={editingTask}
+      />
     </div>
   );
 };

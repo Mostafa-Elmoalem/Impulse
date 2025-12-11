@@ -3,6 +3,7 @@ import { createTask, updateTask, deleteTask } from '../api/taskApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { toast } from 'sonner';
 import type { Task } from '../types';
+import { handleApiError } from '@/shared/utils/errorHandler';
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
@@ -11,12 +12,9 @@ export const useCreateTask = () => {
     mutationFn: createTask,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_STATS });
       toast.success('Task created successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to create task');
-    },
+    onError: (error) => handleApiError(error, 'Failed to create task'),
   });
 };
 

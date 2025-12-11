@@ -1,26 +1,26 @@
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
-// Matches backend SubTask.java
 export interface SubTask {
   id: number;
   name: string;
   description?: string;
-  priority?: string;
+  priority?: Priority; // ✅ Use type
   done: boolean;
 }
 
-// Matches backend Task.java
 export interface Task {
   id: number;
-  name: string; // Backend uses 'name', not 'title'
+  name: string;
   description?: string;
   day: string; // ISO Date string
-  priority: string;
-  done: boolean; // Backend uses 'done', not 'completed'
+  priority: Priority; // ✅ Use type
+  done: boolean;
   
-  // Time & Scoring (Backend specific fields)
+    /** Expected time in minutes */
   expectedTime?: number;
+  /** Start time (0-23 hour format) */
   startTime?: number;
+  /** End time (0-23 hour format) */
   endTime?: number;
   points?: number;
   
