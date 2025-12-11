@@ -23,7 +23,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       login: (user, token) => {
-        localStorage.setItem('token', token);
+        sessionStorage.setItem('token', token); // Slightly safer
         set({ user, token, isAuthenticated: true });
       },
       logout: () => {

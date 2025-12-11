@@ -1,13 +1,12 @@
-import { AppProviders } from './providers';
-import { AppRouter } from './router';
-import '@/styles/index.css';
+// src/app/App.tsx
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 
 function App() {
   return (
-    <AppProviders>
-      <AppRouter />
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <AppRouter />
+      </AppProviders>
+    </ErrorBoundary>
   );
 }
-
-export default App;

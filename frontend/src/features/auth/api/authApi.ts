@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/shared/lib/api-client';
 import type { LoginCredentials, AuthResponse } from '../types';
 
 export const loginWithEmail = (data: LoginCredentials): Promise<AuthResponse> => {

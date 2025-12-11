@@ -1,28 +1,28 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-// ✅ FIXED IMPORT PATH:
-import { useAuthStore } from '@/features/auth/stores/useAuthStore';
-import { LoginPage } from '@/features/auth/pages/LoginPage';
-import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
-import { AppLayout } from '@/shared/components/layout/AppLayout'; 
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Routes, Route } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-};
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage }))
+);
+
+const TasksPage = lazy(() =>
+  import('@/features/tasks/pages/TasksPage').then((m) => ({ default: m.TasksPage }))
+);
+
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+  </div>
+);
 
 export const AppRouter = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      
-      <Route path="/" element={
-        <ProtectedRoute>
-          <AppLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Navigate to="/dashboard" />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/tasks" element={<TasksPage />} />
+      </Routes>
+    </Suspense>
   );
 };

@@ -1,5 +1,5 @@
 import type { Todo } from '../types'
-import { apiClient } from '@/lib/api-client'
+import { apiClient } from '@/shared/lib/api-client'
 
 // Fetch all todos
 export const getTodos = (): Promise<Todo[]> => {

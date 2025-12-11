@@ -4,13 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/shared/components/ui/Button';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { loginWithEmail } from '@/features/auth/api/authApi';
 
 // Zod Schema for Validation
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Invalid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
 });
-
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
@@ -23,15 +31,12 @@ export const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      // Simulate API call - Replace with actual API call later
-      console.log('Logging in...', data);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock success
-      login({ id: '1', name: 'User', email: data.email }, 'fake-jwt-token');
+      const response = await loginWithEmail(data);
+      login(response.user, response.token);
       navigate('/dashboard');
     } catch (error) {
-      alert("Login failed"); // Replace with Toast later
+      // Show error toast
+      console.error('Login failed:', error);
     }
   };
 
