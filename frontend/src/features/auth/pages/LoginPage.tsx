@@ -1,114 +1,71 @@
-import { useState } from 'react';
-import { loginWithEmail, registerWithEmail } from '../api/authApi';
-import '../Auth.css';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/shared/components/ui/Button';
+import { useAuthStore } from '@/features/auth/stores/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
-const LoginPage = () => {
-  const [isActive, setIsActive] = useState(false);
+// Zod Schema for Validation
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
-  // States
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
+type LoginFormValues = z.infer<typeof loginSchema>;
 
-  // Login Handler
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+export const LoginPage = () => {
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
+  
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
     try {
-      console.log("Login:", { email: loginEmail, password: loginPassword });
-      await loginWithEmail({ email: loginEmail, password: loginPassword });
-      alert("Login Successful!");
+      // Simulate API call - Replace with actual API call later
+      console.log('Logging in...', data);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock success
+      login({ id: '1', name: 'User', email: data.email }, 'fake-jwt-token');
+      navigate('/dashboard');
     } catch (error) {
-      console.error(error);
-      alert("Login Failed");
-    }
-  };
-
-  // Register Handler
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      console.log("Register:", { name: regName, email: regEmail, password: regPassword });
-      await registerWithEmail({ name: regName, email: regEmail, password: regPassword });
-      alert("Registration Successful!");
-      setIsActive(false);
-    } catch (error) {
-      console.error(error);
-      alert("Registration Failed");
+      alert("Login failed"); // Replace with Toast later
     }
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className={`login-container ${isActive ? "active" : ""}`} id="container">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center text-brand-600 mb-6">Welcome Back</h1>
         
-        {/* --- Sign Up Form --- */}
-        <div className="form-container sign-up">
-          <form onSubmit={handleRegister}>
-            <h1>Create Account</h1>
-            {/* نص بديل ومبسط لملء الفراغ */}
-            <span>Register with your personal details</span>
-            
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input 
-              type="text" placeholder="Name" required 
-              value={regName} onChange={(e) => setRegName(e.target.value)}
+              {...register('email')}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+              placeholder="you@example.com"
             />
-            <input 
-              type="email" placeholder="Email" required 
-              value={regEmail} onChange={(e) => setRegEmail(e.target.value)}
-            />
-            <input 
-              type="password" placeholder="Password" required 
-              value={regPassword} onChange={(e) => setRegPassword(e.target.value)}
-            />
-            <button type="submit">Sign Up</button>
-          </form>
-        </div>
-
-        {/* --- login Form --- */}
-        <div className="form-container sign-in">
-          <form onSubmit={handleLogin}>
-            <h1>login</h1>
-            {/* نص بديل ومبسط */}
-            <span>login using your email and password</span>
-            
-            <input 
-              type="email" placeholder="Email" required 
-              value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)}
-            />
-            <input 
-              type="password" placeholder="Password" required 
-              value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)}
-            />
-            <a href="#">Forgot Your Password?</a>
-            <button type="submit">login</button>
-          </form>
-        </div>
-
-        {/* Toggle Panel (Overlay) */}
-        <div className="toggle-container">
-          <div className="toggle">
-            <div className="toggle-panel toggle-left">
-              <h1>Welcome Back!</h1>
-              <p>Enter your personal details to use all of site features</p>
-              <button className="btn-transparent" id="login" onClick={() => setIsActive(false)}>
-                login
-              </button>
-            </div>
-            <div className="toggle-panel toggle-right">
-              <h1>Hello, Friend!</h1>
-              <p>Register with your personal details to use all of site features</p>
-              <button className="btn-transparent" id="register" onClick={() => setIsActive(true)}>
-                Sign Up
-              </button>
-            </div>
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
-        </div>
-        
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input 
+              type="password"
+              {...register('password')}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
+            />
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          </div>
+
+          <Button type="submit" className="w-full" isLoading={isSubmitting}>
+            Sign In
+          </Button>
+        </form>
       </div>
     </div>
   );
 };
-
-export default LoginPage;
