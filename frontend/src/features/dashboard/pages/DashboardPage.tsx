@@ -4,7 +4,8 @@ import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { getDashboardStats } from '../api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { StatsCard } from '@/shared/components/ui/Card';
-import { DashboardSkeleton } from '@/shared/components/ui/Skeletion';
+// ✅ FIXED: Typo 'Skeletion' -> 'Skeleton'
+import { DashboardSkeleton } from '@/shared/components/ui/Skeleton';
 
 export const DashboardPage = () => {
   const user = useAuthStore((state) => state.user);
@@ -48,7 +49,7 @@ export const DashboardPage = () => {
           title="Total Focus Time"
           value={formatFocusTime(stats?.totalFocusTime || 0)}
           icon={<Clock size={24} />}
-          color="warning" // Changed to match your palette (blue was not in config, mapped to warning or you can add blue)
+          color="warning" 
         />
       </div>
     </div>

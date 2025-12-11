@@ -1,4 +1,3 @@
-// src/features/auth/pages/LoginPage.tsx
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,10 +15,7 @@ const loginSchema = z.object({
     .email("Invalid email address"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+    .min(1, "Password is required"), 
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -34,16 +30,16 @@ export const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      // ✅ Backend returns: { token, roles }
+      // ✅ Matches the updated AuthResponse type
       const response = await loginWithEmail(data);
       
-      // ✅ Store token, email, and roles
+      // ✅ Passes explicit email from form, as backend TokenDto doesn't include it
       login(response.token, data.email, response.roles);
       
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error: any) {
-      const message = error.response?.data?.messageEn || 'Login failed';
+      const message = error.response?.data?.messageEn || error.message || 'Login failed';
       toast.error(message);
       console.error('Login failed:', error);
     }

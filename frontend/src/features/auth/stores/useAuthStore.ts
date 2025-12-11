@@ -17,16 +17,23 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
 
-      // ✅ FIXED: Now accepts token, email, and roles (matches backend response)
       login: (token: string, email: string, roles: string[]) => {
-        // Decode JWT to get username (subject)
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const name = payload.sub; // JWT subject contains username
+        try {
+          // ✅ FIXED: Added safety check for token decoding
+          // Backend JwtTokenHandler sets subject as the name
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const name = payload.sub || email.split('@')[0]; 
 
-        const user: User = { name, email, roles };
+          const user: User = { name, email, roles };
 
-        localStorage.setItem('token', token);
-        set({ user, token, isAuthenticated: true });
+          localStorage.setItem('token', token);
+          set({ user, token, isAuthenticated: true });
+        } catch (e) {
+          console.error("Failed to decode token", e);
+          // Fallback if decoding fails
+          const user: User = { name: email, email, roles: [] };
+          set({ user, token, isAuthenticated: true });
+        }
       },
 
       logout: () => {
