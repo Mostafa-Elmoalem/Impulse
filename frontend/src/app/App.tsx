@@ -1,7 +1,11 @@
-// src/app/App.tsx
+/ ============================================
+// FILE: src/app/App.tsx
+// ============================================
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { AppProviders } from './providers';
+import { AppRouter } from './router';
 
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
       <AppProviders>

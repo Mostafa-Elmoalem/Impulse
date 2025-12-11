@@ -15,7 +15,6 @@ export const Skeleton = ({ className, ...props }: SkeletonProps) => {
   );
 };
 
-// Usage in DashboardPage
 export const DashboardSkeleton = () => (
   <div className="space-y-6">
     <Skeleton className="h-8 w-48" />

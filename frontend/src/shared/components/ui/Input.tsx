@@ -1,33 +1,157 @@
 // src/shared/components/ui/Input.tsx
 import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/utils/cn';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+// ============================================
+// INPUT VARIANTS
+// ============================================
+const inputVariants = cva(
+  [
+    "w-full rounded-lg font-medium transition-all duration-normal",
+    "focus:outline-none focus:ring-2 focus:ring-offset-0",
+    "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100",
+    "placeholder:text-gray-400",
+  ],
+  {
+    variants: {
+      variant: {
+        default: [
+          "border border-gray-300 bg-white text-gray-900",
+          "hover:border-gray-400",
+          "focus:border-brand-500 focus:ring-brand-500/20",
+        ],
+        filled: [
+          "border-0 bg-gray-100 text-gray-900",
+          "hover:bg-gray-200",
+          "focus:bg-white focus:ring-brand-500/20",
+        ],
+        error: [
+          "border-2 border-danger-500 bg-white text-gray-900",
+          "focus:border-danger-500 focus:ring-danger-500/20",
+        ],
+      },
+      inputSize: {
+        sm: "h-9 px-3 text-sm",
+        md: "h-10 px-4 text-base",
+        lg: "h-12 px-5 text-lg",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      inputSize: "md",
+    },
+  }
+);
+
+// ============================================
+// INPUT COMPONENT
+// ============================================
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    VariantProps<typeof inputVariants> {
   label?: string;
   error?: string;
+  helperText?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      inputSize,
+      label,
+      error,
+      helperText,
+      leftIcon,
+      rightIcon,
+      fullWidth = true,
+      type = 'text',
+      id,
+      ...props
+    },
+    ref
+  ) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const isPassword = type === 'password';
+    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+    const actualVariant = error ? 'error' : variant;
+
     return (
-      <div className="w-full">
+      <div className={cn("space-y-1", fullWidth && "w-full")}>
+        {/* Label */}
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-gray-700"
+          >
             {label}
+            {props.required && <span className="text-danger-500 ml-1">*</span>}
           </label>
         )}
-        <input
-          ref={ref}
-          className={cn(
-            "w-full px-3 py-2 border rounded-lg transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent",
-            error ? "border-red-500" : "border-gray-300",
-            className
+
+        {/* Input Container */}
+        <div className="relative">
+          {/* Left Icon */}
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              {leftIcon}
+            </div>
           )}
-          {...props}
-        />
+
+          {/* Input */}
+          <input
+            ref={ref}
+            id={inputId}
+            type={isPassword && showPassword ? 'text' : type}
+            className={cn(
+              inputVariants({ variant: actualVariant, inputSize }),
+              leftIcon && "pl-10",
+              (rightIcon || isPassword) && "pr-10",
+              className
+            )}
+            {...props}
+          />
+
+          {/* Right Icon or Password Toggle */}
+          {isPassword ? (
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          ) : (
+            rightIcon && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {rightIcon}
+              </div>
+            )
+          )}
+        </div>
+
+        {/* Error Message */}
         {error && (
-          <p className="text-red-500 text-xs mt-1">{error}</p>
+          <div className="flex items-start gap-1 text-danger-600 text-sm">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Helper Text */}
+        {!error && helperText && (
+          <p className="text-sm text-gray-500">{helperText}</p>
         )}
       </div>
     );
@@ -35,3 +159,105 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
+
+// ============================================
+// TEXTAREA COMPONENT
+// ============================================
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+  fullWidth?: boolean;
+}
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  (
+    {
+      className,
+      label,
+      error,
+      helperText,
+      fullWidth = true,
+      id,
+      ...props
+    },
+    ref
+  ) => {
+    const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
+    return (
+      <div className={cn("space-y-1", fullWidth && "w-full")}>
+        {label && (
+          <label
+            htmlFor={textareaId}
+            className="block text-sm font-medium text-gray-700"
+          >
+            {label}
+            {props.required && <span className="text-danger-500 ml-1">*</span>}
+          </label>
+        )}
+
+        <textarea
+          ref={ref}
+          id={textareaId}
+          className={cn(
+            [
+              "w-full rounded-lg px-4 py-3 font-medium transition-all duration-normal",
+              "border border-gray-300 bg-white text-gray-900",
+              "hover:border-gray-400",
+              "focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100",
+              "placeholder:text-gray-400",
+              "resize-y min-h-[100px]",
+            ],
+            error && "border-2 border-danger-500 focus:border-danger-500 focus:ring-danger-500/20",
+            className
+          )}
+          {...props}
+        />
+
+        {error && (
+          <div className="flex items-start gap-1 text-danger-600 text-sm">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {!error && helperText && (
+          <p className="text-sm text-gray-500">{helperText}</p>
+        )}
+      </div>
+    );
+  }
+);
+
+Textarea.displayName = 'Textarea';
+
+// Usage Examples:
+/*
+<Input 
+  label="Email" 
+  type="email" 
+  placeholder="you@example.com"
+  required
+/>
+
+<Input 
+  label="Password" 
+  type="password"
+  error="Password is required"
+/>
+
+<Input 
+  label="Search" 
+  leftIcon={<Search size={18} />}
+  placeholder="Search tasks..."
+/>
+
+<Textarea
+  label="Description"
+  placeholder="Enter task description..."
+  rows={4}
+/>
+*/

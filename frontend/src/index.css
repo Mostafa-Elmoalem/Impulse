@@ -1,39 +1,40 @@
-/* ✅ 1. الـ Import يجب أن يكون في البداية تماماً */
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-/* ✅ 2. بعده تأتي توجيهات Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ✅ 3. ثم باقي التنسيقات */
-:root {
-  /* الألوان المستوحاة من صفحة الدخول */
-  --primary-color: #512da8;
-  --primary-gradient: linear-gradient(to right, #5c6bc0, #512da8);
-  --secondary-color: #5c6bc0;
-  --bg-color: #e0e0e0;
-  --surface-color: #ffffff;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --danger-color: #e74c3c;
-  --success-color: #2ecc71;
-  --warning-color: #f1c40f;
-
-  /* الأشكال والأبعاد */
-  --border-radius-lg: 30px;
-  --border-radius-md: 15px;
-  --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.35);
-  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
-  --sidebar-width: 280px;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: 'Montserrat', sans-serif;
+  }
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Montserrat', sans-serif;
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent;
+  }
+  
+  .bg-gradient-brand {
+    @apply bg-gradient-to-r from-brand-600 to-brand-500;
+  }
+  
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
-
-/* ملاحظة: قمت بإزالة body من هنا لأننا وضعنا تنسيقه في Auth.css
-   لصفحة اللوجين، وسنضع تنسيقاً عاماً مختلفاً للتطبيق لاحقاً */
