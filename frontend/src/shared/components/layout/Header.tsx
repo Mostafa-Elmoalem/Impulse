@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/shared/components/layout/Header.tsx
+import { useState, useEffect } from 'react';
 import { Plus, Moon, Sun } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { format, addDays } from 'date-fns';
@@ -7,8 +8,10 @@ import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 export const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isDarkMode, setIsDarkMode] = useState(false);
-  // Real user score would come from a store or API
-  const dailyScore = 78; 
+  const user = useAuthStore((state) => state.user);
+
+  // ✅ TODO: Replace with real API call when backend implements GET /dashboard/score
+  const dailyScore = 0; // Placeholder
   const dailyTarget = 100;
 
   useEffect(() => {
@@ -17,13 +20,13 @@ export const Header = () => {
   }, []);
 
   return (
-    <header className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200 h-20 transition-colors dark:bg-gray-900 dark:border-gray-800">
+    <header className="flex items-center justify-between px-8 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-20 transition-colors">
       {/* Left: Date */}
       <div>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
         </h2>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Target: {format(addDays(new Date(), 3), 'MMM d')} (+3 Days)
         </p>
       </div>
@@ -34,7 +37,7 @@ export const Header = () => {
           {format(currentTime, 'h:mm a')}
         </div>
         <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          Score: <span className="text-brand-600 font-bold">{dailyScore}/{dailyTarget}</span> 🎯
+          Score: <span className="text-brand-600 dark:text-brand-400 font-bold">{dailyScore}/{dailyTarget}</span> 🎯
         </div>
       </div>
 
@@ -43,8 +46,9 @@ export const Header = () => {
         <button 
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
+          aria-label="Toggle dark mode"
         >
-          {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         
         <Button variant="primary" leftIcon={<Plus size={18} />}>

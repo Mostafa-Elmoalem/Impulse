@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/shared/utils/cn';
+import { Skeleton } from './Skeleton';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;

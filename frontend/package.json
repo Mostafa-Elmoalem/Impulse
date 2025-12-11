@@ -1,4 +1,7 @@
 {
+  "name": "impulse-frontend",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -15,6 +18,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.560.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-hook-form": "^7.68.0",
     "react-router-dom": "^7.10.1",
     "sonner": "^2.0.7",

@@ -1,12 +1,14 @@
+// src/features/auth/pages/LoginPage.tsx
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/shared/components/ui/Button';
+import { Input } from '@/shared/components/ui/Input';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { loginWithEmail } from '@/features/auth/api/authApi';
+import { toast } from 'sonner';
 
-// Zod Schema for Validation
 const loginSchema = z.object({
   email: z
     .string()
@@ -19,6 +21,7 @@ const loginSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one number"),
 });
+
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginPage = () => {
@@ -31,42 +34,50 @@ export const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
+      // ✅ Backend returns: { token, roles }
       const response = await loginWithEmail(data);
-      login(response.user, response.token);
+      
+      // ✅ Store token, email, and roles
+      login(response.token, data.email, response.roles);
+      
+      toast.success('Login successful!');
       navigate('/dashboard');
-    } catch (error) {
-      // Show error toast
+    } catch (error: any) {
+      const message = error.response?.data?.messageEn || 'Login failed';
+      toast.error(message);
       console.error('Login failed:', error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-brand-600 mb-6">Welcome Back</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-950">
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center text-brand-600 mb-6">
+          Welcome to Impulse
+        </h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input 
-              {...register('email')}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-              placeholder="you@example.com"
-            />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-          </div>
+          <Input 
+            label="Email"
+            type="email"
+            error={errors.email?.message}
+            placeholder="you@example.com"
+            {...register('email')}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input 
-              type="password"
-              {...register('password')}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
-            />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-          </div>
+          <Input 
+            label="Password"
+            type="password"
+            error={errors.password?.message}
+            placeholder="••••••••"
+            {...register('password')}
+          />
 
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
+          <Button 
+            type="submit" 
+            fullWidth 
+            isLoading={isSubmitting}
+          >
             Sign In
           </Button>
         </form>
