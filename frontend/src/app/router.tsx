@@ -5,9 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { AppLayout } from '@/shared/components/layout/AppLayout';
 
-// ============================================
-// LAZY LOAD PAGES
-// ============================================
+
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
 );
@@ -20,9 +18,9 @@ const TasksPage = lazy(() =>
   import('@/features/tasks/pages/TasksPage').then((m) => ({ default: m.TasksPage }))
 );
 
-const SettingsPage = lazy(() =>
-  import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage }))
-);
+// const SettingsPage = lazy(() =>
+//   import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+// );
 
 // ============================================
 // LOADING FALLBACK
@@ -89,7 +87,7 @@ export const AppRouter = () => {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          {/* <Route path="/settings" element={<SettingsPage />} /> */}
         </Route>
 
         {/* Redirects */}
@@ -110,5 +108,4 @@ export const ROUTES = {
   SETTINGS: '/settings',
 } as const;
 
-// Type-safe navigation helper
 export type RouteKey = keyof typeof ROUTES;

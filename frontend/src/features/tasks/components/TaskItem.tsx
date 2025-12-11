@@ -1,24 +1,23 @@
 import React from 'react';
+import { Task } from '../types'; // Import the correct type
 
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
+interface TaskItemProps {
+  task: Task;
 }
 
 export const TaskItem = React.memo(
-  ({ task }: { task: Task }) => {
+  ({ task }: TaskItemProps) => {
     return (
-      <div>
-        <h3>{task.title}</h3>
-        <p>{task.completed ? 'Completed' : 'Incomplete'}</p>
+      <div className="p-4 border rounded shadow-sm">
+        {/* Changed task.title -> task.name */}
+        <h3 className="font-bold">{task.name}</h3> 
+        
+        {/* Changed task.completed -> task.done */}
+        <p className="text-sm text-gray-500">
+          {task.done ? 'Completed' : 'Incomplete'}
+        </p>
       </div>
     );
   },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.task.id === nextProps.task.id &&
-      prevProps.task.completed === nextProps.task.completed
-    );
-  }
+  (prev, next) => prev.task.id === next.task.id && prev.task.done === next.task.done
 );
