@@ -5,53 +5,56 @@ import { Header } from './Header';
 import { ProgressBar } from '@/shared/components/ui/ProgressBar';
 import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+
 export const AppLayout = () => {
+  // Fetch real data (via the LocalStorage API we set up)
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.DASHBOARD_STATS,
     queryFn: getDashboardStats,
-    refetchInterval: 30000,
+    refetchInterval: 5000, // Frequent updates for snappy feel
   });
 
   const dailyProgress = stats 
-    ? Math.round((stats.dailyScore / stats.dailyTarget) * 100) 
+    ? Math.min(Math.round((stats.dailyScore / stats.dailyTarget) * 100), 100)
     : 0;
 
-  const taskStats = {
-    done: stats?.completedTasks || 0,
-    deleted: 0, 
-    delayed: 0, 
-  };
-
   return (
-    <div className="flex h-screen bg-background dark:bg-background-dark transition-colors">
-      <Sidebar stats={taskStats} />
+    <div className="flex h-screen w-full bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors duration-300 font-sans overflow-hidden">
+      {/* Sidebar - Fixed Left */}
+      <Sidebar stats={stats} /> 
 
-      <div className="flex-1 flex flex-col ml-[280px]">
-        <Header />
-        <ProgressBar progress={dailyProgress} />
-
-        {/* Main Content - with min-height for footer positioning */}
-        <main className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="min-h-[calc(100vh-160px)] page-padding">
-            <div className="max-w-7xl mx-auto">
-              <Outlet />
-            </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col ml-[280px] h-full relative">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-20 bg-background/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-colors">
+          <Header />
+          {/* Progress Bar embedded in Header area for visibility */}
+          <div className="px-8 pb-0 -mt-1">
+             <ProgressBar progress={dailyProgress} />
           </div>
+        </div>
 
-          {/* Fixed Footer */}
-          <footer className="border-t border-gray-200 dark:border-gray-800 
-                            bg-white dark:bg-gray-950 
-                            py-6 text-center
-                            mt-auto">
-            <p className="mb-2 text-sm italic text-gray-600 dark:text-gray-400 font-medium">
-              "الوقت كالسيف إن لم تقطعه قطعك" - الإمام الشافعي
-            </p>
-            <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
-              <p>Developed by: Mostafa Elmoalem (Frontend) & Ahmed Fekry (Backend)</p>
-              <p>© 2025 Impulse. All rights reserved.</p>
-            </div>
-          </footer>
+        {/* Scrollable Page Content */}
+        {/* Padding bottom ensures content isn't hidden behind the fixed footer */}
+        <main className="flex-1 overflow-y-auto px-8 py-8 pb-[80px] scrollbar-hide">
+          <div className="max-w-6xl mx-auto">
+            <Outlet />
+          </div>
         </main>
+
+        {/* Fixed Footer - Always visible at bottom */}
+        <footer className="absolute bottom-0 left-0 right-0 h-[50px] flex items-center justify-center 
+                         bg-white/80 dark:bg-background-paper-dark/80 backdrop-blur-sm
+                         border-t border-gray-100 dark:border-gray-800
+                         text-xs text-foreground-muted dark:text-foreground-muted-dark z-30 transition-colors">
+          <div className="flex gap-4 items-center">
+             <span className="font-medium italic">"Time is like a sword" - Imam Shafi'i</span>
+             <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+             <span>Dev: Mostafa Elmoalem & Ahmed Fekry</span>
+             <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+             <span>© 2025 Impulse</span>
+          </div>
+        </footer>
       </div>
     </div>
   );

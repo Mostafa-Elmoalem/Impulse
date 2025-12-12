@@ -5,15 +5,14 @@ import { getDashboardStats } from '../api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { StatsCard } from '@/shared/components/ui/Card';
 import { DashboardSkeleton } from '@/shared/components/ui/Skeleton';
-import { ProgressBar } from '@/shared/components/ui/ProgressBar';
-import { Card } from '@/shared/components/ui/Card';
 
-// Utility function to format focus time in hours and minutes
+// Utility function to format focus time
 const formatFocusTime = (minutes: number) => {
   const hrs = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hrs}h ${mins}m`;
 };
+
 export const DashboardPage = () => {
   const user = useAuthStore((state) => state.user);
   
@@ -59,24 +58,6 @@ export const DashboardPage = () => {
           color="warning"
         />
       </div>
-
-      {/* Daily Progress Card */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Daily Progress
-        </h2>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
-              {stats?.dailyScore || 0} / {stats?.dailyTarget || 100} points
-            </span>
-            <span className="font-semibold text-brand-600 dark:text-brand-400">
-              {Math.round((stats?.dailyScore || 0) / (stats?.dailyTarget || 100) * 100)}%
-            </span>
-          </div>
-          <ProgressBar progress={Math.round((stats?.dailyScore || 0) / (stats?.dailyTarget || 100) * 100)} />
-        </div>
-      </Card>
     </div>
   );
 };
