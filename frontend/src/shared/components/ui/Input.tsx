@@ -7,13 +7,17 @@ import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 // ============================================
 // INPUT VARIANTS
 // ============================================
-const inputVariants = cva(
-  [
-    "w-full rounded-lg font-medium transition-all duration-normal",
-    "focus:outline-none focus:ring-2 focus:ring-offset-0",
-    "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100",
-    "placeholder:text-gray-400",
-  ],
+const inputVariants = cva([
+  "w-full rounded-lg font-medium transition-all duration-normal",
+  "bg-white dark:bg-gray-900",
+  "border border-gray-200 dark:border-gray-700",
+  "text-gray-900 dark:text-gray-100",
+  "placeholder:text-gray-400 dark:placeholder:text-gray-500",
+  "hover:border-gray-300 dark:hover:border-gray-600",
+  "focus:outline-none focus:border-brand-500 dark:focus:border-brand-400",
+  "focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-brand-400/20",
+  "disabled:bg-gray-50 dark:disabled:bg-gray-800 disabled:cursor-not-allowed",
+],
   {
     variants: {
       variant: {
@@ -32,11 +36,11 @@ const inputVariants = cva(
           "focus:border-danger-500 focus:ring-danger-500/20",
         ],
       },
-      inputSize: {
-        sm: "h-9 px-3 text-sm",
-        md: "h-10 px-4 text-base",
-        lg: "h-12 px-5 text-lg",
-      },
+        inputSize: {
+          sm: "h-9 px-3 text-sm",
+          md: "h-10 px-4 text-sm",
+          lg: "h-11 px-5 text-base",
+        },
     },
     defaultVariants: {
       variant: "default",
@@ -233,31 +237,3 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = 'Textarea';
-
-// Usage Examples:
-/*
-<Input 
-  label="Email" 
-  type="email" 
-  placeholder="you@example.com"
-  required
-/>
-
-<Input 
-  label="Password" 
-  type="password"
-  error="Password is required"
-/>
-
-<Input 
-  label="Search" 
-  leftIcon={<Search size={18} />}
-  placeholder="Search tasks..."
-/>
-
-<Textarea
-  label="Description"
-  placeholder="Enter task description..."
-  rows={4}
-/>
-*/

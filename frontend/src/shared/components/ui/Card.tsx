@@ -11,20 +11,22 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white border border-gray-200 shadow-card hover:shadow-card-hover",
-        elevated: "bg-white shadow-lg hover:shadow-xl",
-        outlined: "bg-white border-2 border-gray-300",
+        default: [
+          "bg-white dark:bg-gray-900",
+          "border border-gray-200 dark:border-gray-800",
+          "shadow-card hover:shadow-card-hover",
+        ],
+        elevated: [
+          "bg-white dark:bg-gray-900",
+          "shadow-lg hover:shadow-xl",
+        ],
         ghost: "bg-transparent",
-        gradient: "bg-gradient-brand text-white shadow-lg",
       },
       padding: {
         none: "p-0",
         sm: "p-4",
         md: "p-6",
         lg: "p-8",
-      },
-      hoverable: {
-        true: "cursor-pointer hover:scale-[1.01] active:scale-[0.99]",
       },
     },
     defaultVariants: {
@@ -44,11 +46,11 @@ export interface CardProps
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, padding, hoverable, as: Component = 'div', ...props }, ref) => {
+  ({ className, variant, padding, as: Component = 'div', ...props }, ref) => {
     return (
       <Component
         ref={ref}
-        className={cn(cardVariants({ variant, padding, hoverable }), className)}
+        className={cn(cardVariants({ variant, padding }), className)}
         {...props}
       />
     );
@@ -71,7 +73,7 @@ export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
         ref={ref}
         className={cn(
           "flex flex-col space-y-1.5",
-          divider && "pb-4 border-b border-gray-200",
+          divider && "pb-4 border-b border-gray-200 dark:border-gray-800",
           className
         )}
         {...props}
@@ -94,7 +96,7 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
     return (
       <Component
         ref={ref}
-        className={cn("text-xl font-semibold leading-none tracking-tight text-gray-900", className)}
+        className={cn("text-xl font-semibold leading-none tracking-tight text-gray-900 dark:text-white", className)}
         {...props}
       />
     );
@@ -113,7 +115,7 @@ export const CardDescription = React.forwardRef<
   return (
     <p
       ref={ref}
-      className={cn("text-sm text-gray-600", className)}
+      className={cn("text-sm text-gray-600 dark:text-gray-400", className)}
       {...props}
     />
   );
@@ -153,7 +155,7 @@ export const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
         ref={ref}
         className={cn(
           "flex items-center pt-4",
-          divider && "border-t border-gray-200",
+          divider && "border-t border-gray-200 dark:border-gray-800",
           className
         )}
         {...props}
@@ -171,46 +173,37 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  color?: 'brand' | 'success' | 'danger' | 'warning';
+  color?: 'brand' | 'success' | 'danger' | 'warning' | 'info';
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({
   title,
   value,
   icon,
-  trend,
   color = 'brand',
 }) => {
   const colorClasses = {
-    brand: 'text-brand-600 bg-brand-50',
-    success: 'text-success-600 bg-success-50',
-    danger: 'text-danger-600 bg-danger-50',
-    warning: 'text-warning-600 bg-warning-50',
+    brand: 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20',
+    success: 'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20',
+    danger: 'text-danger-600 dark:text-danger-400 bg-danger-50 dark:bg-danger-900/20',
+    warning: 'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20',
+    info: 'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20',
   };
 
   return (
-    <Card hoverable>
+    <Card className="hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200 cursor-default">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <CardDescription>{title}</CardDescription>
-          <CardTitle className="mt-2 text-3xl">{value}</CardTitle>
-          
-          {trend && (
-            <div className={cn(
-              "mt-2 text-sm font-medium",
-              trend.isPositive ? "text-success-600" : "text-danger-600"
-            )}>
-              {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
-            </div>
-          )}
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            {title}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+            {value}
+          </p>
         </div>
         
         {icon && (
-          <div className={cn("p-3 rounded-lg", colorClasses[color])}>
+          <div className={cn("p-3 rounded-xl", colorClasses[color])}>
             {icon}
           </div>
         )}
@@ -218,29 +211,3 @@ export const StatsCard: React.FC<StatsCardProps> = ({
     </Card>
   );
 };
-
-// Usage Examples:
-/*
-// Basic Card
-<Card>
-  <CardHeader>
-    <CardTitle>Card Title</CardTitle>
-    <CardDescription>Card description goes here</CardDescription>
-  </CardHeader>
-  <CardContent>
-    <p>Card content</p>
-  </CardContent>
-  <CardFooter>
-    <Button>Action</Button>
-  </CardFooter>
-</Card>
-
-// Stats Card
-<StatsCard
-  title="Total Tasks"
-  value={127}
-  icon={<CheckCircle size={24} />}
-  trend={{ value: 12, isPositive: true }}
-  color="success"
-/>
-*/

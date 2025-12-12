@@ -9,13 +9,12 @@ import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { TaskItem } from '../components/TaskItem';
 import { TaskFormModal } from '../components/TaskFormModal';
 import type { Task } from '../types';
-
+import { Skeleton } from '@/shared/components/ui/Skeleton';
 export const TasksPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: tasks = [], isLoading, error } = useQuery({
+  const { data: tasks = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.TASKS,
     queryFn: getTasks,
   });
@@ -24,22 +23,15 @@ export const TasksPage = () => {
     task.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (task: Task) => {
-    setEditingTask(task);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingTask(undefined);
-  };
-
   return (
     <div className="space-y-6">
+      {/* Header */}
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tasks</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Tasks
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Manage your daily tasks and goals
           </p>
         </div>
@@ -48,42 +40,38 @@ export const TasksPage = () => {
         </Button>
       </header>
 
-      <div className="flex gap-4">
-        <Input
-          placeholder="Search tasks..."
-          leftIcon={<Search size={18} />}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* Search */}
+      <Input
+        placeholder="Search tasks..."
+        leftIcon={<Search size={18} />}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
 
-      <div className="space-y-4">
+      {/* Tasks List */}
+      <div className="space-y-3">
         {isLoading ? (
-          <p className="text-gray-500">Loading tasks...</p>
-        ) : error ? (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              ⚠️ <strong>Backend TODO:</strong> Implement GET /api/tasks endpoint
-            </p>
-            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-              Error: {(error as Error).message}
-            </p>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
           </div>
         ) : filteredTasks.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
-            {searchQuery ? 'No tasks match your search.' : 'No tasks yet. Click "Add Task" to create one.'}
-          </p>
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">
+              {searchQuery ? 'No tasks match your search.' : 'No tasks yet. Click "Add Task" to create one.'}
+            </p>
+          </div>
         ) : (
           filteredTasks.map((task) => (
-            <TaskItem key={task.id} task={task} onEdit={handleEdit} />
+            <TaskItem key={task.id} task={task} />
           ))
         )}
       </div>
 
       <TaskFormModal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        task={editingTask}
+        onClose={() => setIsModalOpen(false)}
       />
     </div>
   );
