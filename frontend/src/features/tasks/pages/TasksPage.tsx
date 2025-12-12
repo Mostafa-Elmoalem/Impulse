@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Inbox } from 'lucide-react';
+import { CalendarDays, Inbox, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { getTasks } from '../api/taskApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
@@ -7,33 +7,53 @@ import { TaskItem } from '../components/TaskItem';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useDateStore } from '@/shared/stores/useDateStore';
 import { useUIStore } from '@/shared/stores/useUIStore';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, isValid, parseISO } from 'date-fns';
 
 export const TasksPage = () => {
   // Global State
   const { selectedDate } = useDateStore();
   const { searchQuery, openTaskModal } = useUIStore();
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: tasks = [], isLoading, isError } = useQuery({
     queryKey: QUERY_KEYS.TASKS,
     queryFn: getTasks,
   });
 
-  // Filter Logic: Date AND Search Query
+  // Filter Logic: Date AND Search Query (Safer Version)
   const filteredTasks = tasks.filter(task => {
-    // 1. Filter by Date (Exact match)
-    const matchesDate = isSameDay(new Date(task.day), selectedDate);
-    
-    // 2. Filter by Search (if exists)
-    // Note: If search is active, we might want to search ALL history or just this day.
-    // The requirement "General Search" usually means searching everything.
-    // Let's implement: If search query exists -> Search ALL. If not -> Filter by Date.
-    if (searchQuery.trim()) {
-      return task.name.toLowerCase().includes(searchQuery.toLowerCase());
+    try {
+      // 1. Safety Check for Date
+      if (!task.day) return false;
+      
+      const taskDate = new Date(task.day);
+      if (!isValid(taskDate)) return false;
+
+      // 2. Filter by Date (Exact match)
+      const matchesDate = isSameDay(taskDate, selectedDate);
+      
+      // 3. Filter by Search (if exists)
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        return task.name.toLowerCase().includes(query) || 
+               (task.description && task.description.toLowerCase().includes(query));
+      }
+      
+      return matchesDate;
+    } catch (e) {
+      console.warn("Skipping invalid task data:", task);
+      return false;
     }
-    
-    return matchesDate;
   });
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <AlertCircle size={40} className="text-red-500 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Error loading tasks</h3>
+        <p className="text-gray-500">Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

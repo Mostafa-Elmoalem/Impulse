@@ -1,10 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-/* Import Inter font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
+
+  /* إجبار المتصفح على تغيير ثيم عناصر التحكم (مثل الكالندر) 
+    بناءً على الكلاس الموجود في الـ HTML
+  */
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  /* تطبيق خاص للـ Input لضمان استجابته */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    color-scheme: light;
+    accent-color: #8B5CF6;
+    /* Brand Color (Purple) */
+  }
+
+  :root.dark input[type="date"],
+  :root.dark input[type="time"],
+  :root.dark input[type="datetime-local"] {
+    color-scheme: dark;
+    accent-color: #8B5CF6;
+  }
 
   *,
   ::after,

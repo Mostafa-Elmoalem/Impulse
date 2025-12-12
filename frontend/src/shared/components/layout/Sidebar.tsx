@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ListTodo, CheckCircle2, Trash2, Clock, Settings, HelpCircle, Zap } from 'lucide-react';
+import { LayoutGrid, ListTodo, CheckCircle2, Trash2, Clock, Zap } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { DashboardStats } from '@/features/dashboard/api/dashboardApi';
 
@@ -8,7 +8,6 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ stats }: SidebarProps) => {
-  // Mapping stats from the API
   const doneCount = stats?.completedTasks || 0;
   const pendingCount = stats?.pendingTasks || 0;
   const score = stats?.dailyScore || 0;
@@ -48,8 +47,8 @@ export const Sidebar = ({ stats }: SidebarProps) => {
         ))}
       </nav>
 
-      {/* Tasks Summary Widget (Design Doc Section 1) */}
-      <div className="mx-4 mb-6 p-5 rounded-3xl bg-background dark:bg-background-dark border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
+      {/* Tasks Summary Widget */}
+      <div className="mx-4 mb-8 p-5 rounded-3xl bg-background dark:bg-background-dark border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
         {/* Decorative background blob */}
         <div className="absolute -top-10 -right-10 w-24 h-24 bg-brand-500/5 rounded-full blur-2xl group-hover:bg-brand-500/10 transition-colors" />
         
@@ -63,13 +62,6 @@ export const Sidebar = ({ stats }: SidebarProps) => {
              <SummaryRow icon={Zap} color="text-brand-500" label="Score" value={score} />
           </div>
         </div>
-      </div>
-
-      {/* Footer Actions */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800 mb-6">
-        <button className="flex items-center gap-3 px-4 py-2 w-full text-sm font-medium text-foreground-muted hover:text-brand-600 dark:text-gray-400 dark:hover:text-white transition-colors rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800">
-          <Settings size={18} /> Settings
-        </button>
       </div>
     </aside>
   );
