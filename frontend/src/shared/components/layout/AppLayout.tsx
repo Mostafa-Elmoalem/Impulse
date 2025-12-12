@@ -5,13 +5,19 @@ import { Header } from './Header';
 import { ProgressBar } from '@/shared/components/ui/ProgressBar';
 import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { TaskFormModal } from '@/features/tasks/components/TaskFormModal';
+import { useUIStore } from '@/shared/stores/useUIStore';
+import { useDateStore } from '@/shared/stores/useDateStore';
 
 export const AppLayout = () => {
-  // Fetch real data (via the LocalStorage API we set up)
+  // UI Stores
+  const { isTaskModalOpen, closeTaskModal } = useUIStore();
+  const { selectedDate } = useDateStore();
+
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.DASHBOARD_STATS,
     queryFn: getDashboardStats,
-    refetchInterval: 5000, // Frequent updates for snappy feel
+    refetchInterval: 5000,
   });
 
   const dailyProgress = stats 
@@ -28,21 +34,20 @@ export const AppLayout = () => {
         {/* Sticky Header */}
         <div className="sticky top-0 z-20 bg-background/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-colors">
           <Header />
-          {/* Progress Bar embedded in Header area for visibility */}
+          {/* Progress Bar embedded in Header area */}
           <div className="px-8 pb-0 -mt-1">
              <ProgressBar progress={dailyProgress} />
           </div>
         </div>
 
         {/* Scrollable Page Content */}
-        {/* Padding bottom ensures content isn't hidden behind the fixed footer */}
         <main className="flex-1 overflow-y-auto px-8 py-8 pb-[80px] scrollbar-hide">
           <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>
         </main>
 
-        {/* Fixed Footer - Always visible at bottom */}
+        {/* Fixed Footer */}
         <footer className="absolute bottom-0 left-0 right-0 h-[50px] flex items-center justify-center 
                          bg-white/80 dark:bg-background-paper-dark/80 backdrop-blur-sm
                          border-t border-gray-100 dark:border-gray-800
@@ -56,6 +61,13 @@ export const AppLayout = () => {
           </div>
         </footer>
       </div>
+
+      {/* Global Task Modal */}
+      <TaskFormModal 
+        isOpen={isTaskModalOpen}
+        onClose={closeTaskModal}
+        initialDate={selectedDate} // Pre-fill with selected date
+      />
     </div>
   );
 };
