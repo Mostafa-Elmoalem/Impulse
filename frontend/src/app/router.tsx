@@ -1,10 +1,8 @@
-// src/app/router.tsx
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { AppLayout } from '@/shared/components/layout/AppLayout';
-
 
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage }))
@@ -17,10 +15,6 @@ const DashboardPage = lazy(() =>
 const TasksPage = lazy(() =>
   import('@/features/tasks/pages/TasksPage').then((m) => ({ default: m.TasksPage }))
 );
-
-// const SettingsPage = lazy(() =>
-//   import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage }))
-// );
 
 // ============================================
 // LOADING FALLBACK
@@ -54,7 +48,7 @@ const RedirectIfAuth = ({ children }: { children: React.ReactNode }) => {
   // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   // if (isAuthenticated) {
-  //   return <Navigate to="/dashboard" replace />;
+  //   return <Navigate to="/tasks" replace />; // Changed to /tasks
   // }
 
   return <>{children}</>;
@@ -87,12 +81,11 @@ export const AppRouter = () => {
         >
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<TasksPage />} />
-          {/* <Route path="/settings" element={<SettingsPage />} /> */}
         </Route>
 
         {/* Redirects */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/tasks" replace />} /> {/* Default to Tasks */}
+        <Route path="*" element={<Navigate to="/tasks" replace />} /> {/* Fallback to Tasks */}
       </Routes>
     </Suspense>
   );
@@ -105,7 +98,6 @@ export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
   TASKS: '/tasks',
-  SETTINGS: '/settings',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Moon, Sun, Calendar, Bell, ChevronDown, RotateCcw, Search, Plus, X } from 'lucide-react';
 import { format, isSameDay, differenceInCalendarDays, startOfToday } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { useDateStore } from '@/shared/stores/useDateStore';
 import { useUIStore } from '@/shared/stores/useUIStore';
 import { cn } from '@/shared/utils/cn';
@@ -11,27 +12,24 @@ export const Header = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   
-  // Stores
   const { selectedDate, setSelectedDate, resetToToday } = useDateStore();
   const { openTaskModal, searchQuery, setSearchQuery } = useUIStore();
   
   const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const today = startOfToday();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Theme
     const dark = localStorage.getItem('theme') === 'dark' || 
                  (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setIsDarkMode(dark);
     document.documentElement.classList.toggle('dark', dark);
 
-    // Clock
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Focus input when search expands
   useEffect(() => {
     if (isSearchExpanded && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -51,6 +49,11 @@ export const Header = () => {
     }
   };
 
+  const handleAddTask = () => {
+    navigate('/tasks');
+    openTaskModal();
+  };
+
   const getRelativeDateText = () => {
     const diff = differenceInCalendarDays(selectedDate, today);
     if (diff === 0) return "Today";
@@ -64,7 +67,7 @@ export const Header = () => {
   const isToday = isSameDay(selectedDate, today);
 
   return (
-    <header className="h-[80px] px-8 flex items-center justify-between gap-4">
+    <header className="h-[80px] px-8 flex items-center justify-between gap-4 relative z-40">
       {/* 1. Left: Date Navigation */}
       <div className="flex items-center gap-4 min-w-fit">
         <div 
@@ -72,7 +75,6 @@ export const Header = () => {
           onClick={() => dateInputRef.current?.showPicker()}
         >
           <div className="flex items-center gap-3">
-            {/* Calendar Icon Box */}
             <div className={cn(
               "hidden md:flex p-2.5 rounded-xl shadow-sm transition-all duration-300",
               isToday 
@@ -82,13 +84,12 @@ export const Header = () => {
                <Calendar size={18} />
             </div>
 
-            {/* Date Text */}
             <div>
-              <h2 className="text-sm md:text-base font-bold text-foreground dark:text-white tracking-tight flex items-center gap-2 group-hover:text-brand-600 transition-colors">
+              <h2 className="text-sm md:text-base font-bold text-foreground dark:text-white tracking-tight flex items-center gap-2 group-hover:text-brand-600 transition-colors select-none">
                 {format(selectedDate, 'EEEE, MMM d')}
                 <ChevronDown size={14} className="text-gray-400 group-hover:text-brand-500 transition-transform group-hover:rotate-180" />
                 
-                {/* Hidden Native Input */}
+                {/* Native Date Input */}
                 <input 
                   ref={dateInputRef}
                   type="date" 
@@ -109,7 +110,6 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Back to Today Button */}
         {!isToday && (
           <button
             onClick={resetToToday}
@@ -123,7 +123,7 @@ export const Header = () => {
         )}
       </div>
 
-      {/* 2. Center: Live Time (Hidden if search expands on mobile) */}
+      {/* 2. Center: Live Time */}
       <div className={cn(
         "absolute left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center transition-opacity duration-300",
         isSearchExpanded ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -176,7 +176,6 @@ export const Header = () => {
 
         <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1 hidden md:block" />
 
-        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className="w-10 h-10 rounded-xl flex items-center justify-center
@@ -186,9 +185,8 @@ export const Header = () => {
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        {/* Add Task Button (Primary Action) */}
         <Button 
-          onClick={openTaskModal}
+          onClick={handleAddTask}
           size="sm"
           className="rounded-xl px-4 shadow-lg shadow-brand-500/20 hidden md:flex"
           leftIcon={<Plus size={18} />}
@@ -196,9 +194,8 @@ export const Header = () => {
           Add Task
         </Button>
         
-        {/* Mobile Add Button (Icon Only) */}
         <button 
-          onClick={openTaskModal}
+          onClick={handleAddTask}
           className="w-10 h-10 rounded-xl bg-brand-500 text-white flex md:hidden items-center justify-center shadow-lg shadow-brand-500/20 active:scale-95 transition-transform"
         >
           <Plus size={20} />

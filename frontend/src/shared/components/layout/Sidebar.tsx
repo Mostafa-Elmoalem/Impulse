@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ListTodo, CheckCircle2, Trash2, Clock, Zap } from 'lucide-react';
+import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { DashboardStats } from '@/features/dashboard/api/dashboardApi';
 
@@ -11,6 +11,12 @@ export const Sidebar = ({ stats }: SidebarProps) => {
   const doneCount = stats?.completedTasks || 0;
   const pendingCount = stats?.pendingTasks || 0;
   const score = stats?.dailyScore || 0;
+  
+  // Calculate Focus Time (e.g. 125 mins -> 2h 5m)
+  const focusMinutes = stats?.totalFocusTime || 0;
+  const hours = Math.floor(focusMinutes / 60);
+  const minutes = focusMinutes % 60;
+  const focusTimeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
   const navItems = [
     { icon: LayoutGrid, label: 'Overview', path: '/dashboard' },
@@ -58,6 +64,8 @@ export const Sidebar = ({ stats }: SidebarProps) => {
         <div className="space-y-4">
           <SummaryRow icon={CheckCircle2} color="text-status-success" label="Done" value={doneCount} />
           <SummaryRow icon={Clock} color="text-status-warning" label="Pending" value={pendingCount} />
+          <SummaryRow icon={Hourglass} color="text-status-info" label="Focus" value={focusTimeText} />
+          
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
              <SummaryRow icon={Zap} color="text-brand-500" label="Score" value={score} />
           </div>
