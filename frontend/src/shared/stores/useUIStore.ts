@@ -1,17 +1,20 @@
 import { create } from 'zustand';
+import { Task } from '@/features/tasks/types'; // تأكد من استيراد النوع
 
 interface UIState {
-  // Task Modal
+  // Task Form Modal
   isTaskModalOpen: boolean;
   openTaskModal: () => void;
   closeTaskModal: () => void;
 
-  // Sidebar (Mobile Visibility)
+  // Task Completion Modal (NEW)
+  taskToComplete: Task | null;
+  setTaskToComplete: (task: Task | null) => void;
+
+  // Sidebar
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
-
-  // Sidebar (Desktop Collapse State)
   isSidebarCollapsed: boolean;
   toggleSidebarCollapsed: () => void;
 
@@ -25,12 +28,14 @@ export const useUIStore = create<UIState>((set) => ({
   openTaskModal: () => set({ isTaskModalOpen: true }),
   closeTaskModal: () => set({ isTaskModalOpen: false }),
 
-  // Mobile Menu Logic
+  // Completion Logic
+  taskToComplete: null,
+  setTaskToComplete: (task) => set({ taskToComplete: task }),
+
   isSidebarOpen: false,
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
 
-  // Desktop Collapse Logic (Default is NOT collapsed)
   isSidebarCollapsed: false,
   toggleSidebarCollapsed: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   

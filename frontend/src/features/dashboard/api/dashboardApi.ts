@@ -8,7 +8,7 @@ export interface DashboardStats {
   dailyTarget: number;
 }
 
-// Helper to get data directly (bypassing the async API for calculation)
+// Helper to get data directly
 const getLocalTasks = (): Task[] => {
   const data = localStorage.getItem('impulse_tasks_db');
   return data ? JSON.parse(data) : [];
@@ -16,35 +16,28 @@ const getLocalTasks = (): Task[] => {
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 300));
 
   const tasks = getLocalTasks();
-  const today = new Date().toISOString().split('T')[0];
 
-  // Calculate stats dynamically from local data
   const pending = tasks.filter(t => !t.done).length;
   const completed = tasks.filter(t => t.done).length;
   
-  // Calculate focus time (sum of expectedTime for completed tasks)
+  // Calculate focus time (sum of actualTime if available, else expectedTime)
   const focusTime = tasks
     .filter(t => t.done)
-    .reduce((acc, curr) => acc + (curr.expectedTime || 0), 0);
+    .reduce((acc, curr) => acc + (curr.actualTime || curr.expectedTime || 0), 0);
 
-  // Calculate Score (Simple logic: 10 pts per task + bonus for priority)
+  // ✅ CORRECT LOGIC: Sum the ACTUAL saved points
   const score = tasks
     .filter(t => t.done)
-    .reduce((acc, curr) => {
-      let multiplier = 1;
-      if (curr.priority === 'urgent') multiplier = 2;
-      if (curr.priority === 'high') multiplier = 1.5;
-      return acc + (10 * multiplier);
-    }, 0);
+    .reduce((acc, curr) => acc + (curr.points || 0), 0);
 
   return {
     pendingTasks: pending,
     completedTasks: completed,
     totalFocusTime: focusTime,
-    dailyScore: Math.round(score),
-    dailyTarget: 100 // Hardcoded target for now
+    dailyScore: Math.round(score * 10) / 10,
+    dailyTarget: 100 // Target from document
   };
 };

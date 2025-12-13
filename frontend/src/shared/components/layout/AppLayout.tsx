@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ProgressBar } from '../ui/ProgressBar';
 import { TaskFormModal } from '@/features/tasks/components/TaskFormModal';
+import { GlobalTaskCompletion } from '@/features/tasks/components/GlobalTaskCompletion'; // Import New Component
 import { useUIStore } from '@/shared/stores/useUIStore';
 import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
@@ -19,7 +20,8 @@ export const AppLayout = () => {
   });
 
   const score = stats?.dailyScore || 0;
-  const progressPercentage = Math.min(100, (score / 150) * 100); 
+  const target = stats?.dailyTarget || 100;
+  const progressPercentage = (score / target) * 100;
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors flex">
@@ -28,7 +30,6 @@ export const AppLayout = () => {
       <Sidebar stats={stats} />
 
       {/* 2. Main Content Wrapper */}
-      {/* Dynamic Padding based on Sidebar state */}
       <div className={cn(
         "flex-1 flex flex-col min-h-screen transition-all duration-300 relative",
         isSidebarCollapsed ? "md:pl-[80px]" : "md:pl-[280px]"
@@ -38,12 +39,12 @@ export const AppLayout = () => {
         <Header />
 
         {/* Progress Bar */}
-        <div className="w-full px-4 md:px-8 mt-2 ">
+        <div className="w-full px-4 md:px-8 mt-2 relative z-[40]">
            <ProgressBar progress={Math.round(progressPercentage)} />
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in">
+        <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in z-0">
           <Outlet />
         </main>
 
@@ -76,10 +77,17 @@ export const AppLayout = () => {
 
       </div>
 
+      {/* --- Global Modals --- */}
+      
+      {/* 1. Add Task Modal */}
       <TaskFormModal 
         isOpen={isTaskModalOpen} 
         onClose={closeTaskModal} 
       />
+
+      {/* 2. Completion Modal (Fixes Z-Index Issue) */}
+      <GlobalTaskCompletion />
+
     </div>
   );
 };

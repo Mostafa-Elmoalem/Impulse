@@ -5,6 +5,7 @@ import { Task } from '../types';
 import { cn } from '@/shared/utils/cn';
 import { format, differenceInMinutes, parse, addMinutes } from 'date-fns';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { calculateTaskPoints, getPointsBreakdown } from '../utils/scoringUtils';
 
 // Sub-components
 import { VictoryOverlay } from './completion/VictoryOverlay';
@@ -15,7 +16,7 @@ import { ScoreBreakdown } from './completion/ScoreBreakdown';
 interface TaskCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (actualTime: number) => void;
+  onConfirm: (actualTime: number, points: number) => void; // Updated signature
   task: Task;
 }
 
@@ -31,7 +32,6 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
   const [showVictory, setShowVictory] = useState(false);
   const [displayedPoints, setDisplayedPoints] = useState(0);
   
-  // Calculate remaining tasks
   const tasks = queryClient.getQueryData<Task[]>(QUERY_KEYS.TASKS) || [];
   const remainingTasks = Math.max(0, tasks.filter(t => !t.done).length - 1);
 
@@ -67,32 +67,14 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
   const actualDuration = calculateDuration();
   const timeDiff = task.expectedTime - actualDuration;
 
-  // Points Logic
-  const calculatePointsDetails = () => {
-    let base = 10;
-    const priorityMult = task.priority === 'urgent' ? 2.0 : task.priority === 'high' ? 1.5 : task.priority === 'medium' ? 1.2 : 1.0;
-    
-    // Base Points (Task Value)
-    const calculatedBase = Math.round(base * priorityMult);
-
-    // Bonus Points
-    let bonus = 0;
-    if (timeDiff > 0) {
-      bonus = Math.min(10, Math.floor(timeDiff / 5));
-    } else if (timeDiff < 0) {
-      bonus = -Math.min(5, Math.ceil(Math.abs(timeDiff) / 10));
-    }
-
-    return { base: calculatedBase, bonus, total: calculatedBase + bonus };
-  };
-
-  const pointsData = calculatePointsDetails();
+  // Use the new centralized scoring logic
+  const pointsData = getPointsBreakdown(task, actualDuration);
 
   // Animations
   const handleConfirm = () => {
     setShowVictory(true);
     let start = 0;
-    const duration = 800; // Fast
+    const duration = 800;
     const stepTime = 16;
     const steps = duration / stepTime;
     const increment = pointsData.total / steps;
@@ -118,19 +100,19 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
         "relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]",
       )}>
         
-        {/* Victory Screen */}
+        {/* Victory Screen - Passes the FINAL Calculated Points */}
         {showVictory && (
           <VictoryOverlay 
-            points={displayedPoints} 
+            points={pointsData.total} 
             basePoints={pointsData.base}
             bonusPoints={pointsData.bonus}
             timeDiff={timeDiff} 
             remainingTasks={remainingTasks}
-            onContinue={() => onConfirm(actualDuration)} 
+            onContinue={() => onConfirm(actualDuration, pointsData.total)} 
           />
         )}
 
-        {/* --- Content --- */}
+        {/* Content */}
         <CompletionHeader taskName={task.name} onClose={onClose} />
 
         <div className="p-6 space-y-6 overflow-y-auto">
