@@ -3,10 +3,6 @@
 @config "../tailwind.config.js";
 
 @layer base {
-
-  /* إجبار المتصفح على تغيير ثيم عناصر التحكم (مثل الكالندر) 
-    بناءً على الكلاس الموجود في الـ HTML
-  */
   :root {
     color-scheme: light;
   }
@@ -15,13 +11,12 @@
     color-scheme: dark;
   }
 
-  /* تطبيق خاص للـ Input لضمان استجابته */
+  /* Custom Scrollbar for Input Date/Time */
   input[type="date"],
   input[type="time"],
   input[type="datetime-local"] {
     color-scheme: light;
     accent-color: #8B5CF6;
-    /* Brand Color (Purple) */
   }
 
   :root.dark input[type="date"],
@@ -34,7 +29,7 @@
   *,
   ::after,
   ::before {
-    @apply border-gray-200 dark:border-gray-700;
+    @apply border-border dark:border-border-dark;
   }
 
   html {
@@ -50,11 +45,11 @@
 
   /* Improved scrollbar styling */
   ::-webkit-scrollbar {
-    @apply w-2 h-2;
+    @apply w-1.5 h-1.5;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-900;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -65,31 +60,25 @@
     @apply bg-gray-400 dark:bg-gray-600;
   }
 
-  /* Selection color */
   ::selection {
     @apply bg-brand-200 text-brand-900;
   }
 }
 
 @layer utilities {
-
-  /* Gradient text */
   .text-gradient {
     @apply bg-gradient-to-r from-brand-500 to-pink-500 bg-clip-text text-transparent;
   }
 
-  /* Gradient background */
   .bg-gradient-brand {
     @apply bg-gradient-to-br from-brand-500 via-brand-600 to-pink-500;
   }
 
-  /* Glass morphism */
   .glass {
     @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl;
-    @apply border border-white/30 dark:border-gray-700/30;
+    @apply border border-white/40 dark:border-gray-700/40;
   }
 
-  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -97,26 +86,5 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5;
-  }
-
-  /* Focus ring */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
-    @apply dark:focus:ring-brand-400 dark:focus:ring-offset-gray-900;
-  }
-
-  /* Page padding */
-  .page-padding {
-    @apply px-6 py-8 lg:px-8 lg:py-10;
-  }
-
-  /* Container */
-  .container-custom {
-    @apply max-w-7xl mx-auto px-6 lg:px-8;
   }
 }

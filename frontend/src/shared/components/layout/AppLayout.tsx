@@ -1,122 +1,86 @@
 import { Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Github, Linkedin, GitBranch, Heart } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { ProgressBar } from '@/shared/components/ui/ProgressBar';
-import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
-import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { ProgressBar } from '../ui/ProgressBar';
 import { TaskFormModal } from '@/features/tasks/components/TaskFormModal';
 import { useUIStore } from '@/shared/stores/useUIStore';
-import { useDateStore } from '@/shared/stores/useDateStore';
+import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
+import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { Heart } from 'lucide-react';
 
 export const AppLayout = () => {
   const { isTaskModalOpen, closeTaskModal } = useUIStore();
-  const { selectedDate } = useDateStore();
-
+  
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.DASHBOARD_STATS,
     queryFn: getDashboardStats,
-    refetchInterval: 5000,
   });
 
-  const dailyProgress = stats 
-    ? Math.min(Math.round((stats.dailyScore / stats.dailyTarget) * 100), 100)
-    : 0;
+  // Calculate Progress Score (0-100)
+  const score = stats?.dailyScore || 0;
+  const progressPercentage = Math.min(100, (score / 150) * 100); 
 
   return (
-    <div className="flex h-screen w-full bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors duration-300 font-sans overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar stats={stats} /> 
+    <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors flex">
+      
+      {/* 1. Sidebar (Fixed Left) */}
+      <Sidebar stats={stats} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col ml-[280px] h-full relative">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-20 bg-background/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-colors">
-          <Header />
-          <div className="px-8 pb-0 -mt-1">
-             <ProgressBar progress={dailyProgress} />
-          </div>
+      {/* 2. Main Content Wrapper */}
+      <div className="flex-1 md:pl-[280px] flex flex-col min-h-screen transition-all duration-300 relative">
+        
+        {/* Header (Sticky Top) */}
+        <Header />
+
+        {/* Progress Bar (Normal Flow - Not Sticky) */}
+        {/* Removed 'sticky' and background/shadow classes to save space */}
+        <div className="w-full z-50 px-8 md:px-8 mt-0">
+           <ProgressBar progress={Math.round(progressPercentage)} />
         </div>
 
-        {/* Scrollable Page Content */}
-        <main className="flex-1 overflow-y-auto px-8 py-8 scrollbar-hide flex flex-col">
-          <div className="max-w-6xl mx-auto w-full flex-1">
-            <Outlet />
-          </div>
-
-          {/* Athar (The Quote) - Distinctive Section */}
-          <div className="max-w-4xl mx-auto w-full mt-16 mb-24 animate-fade-in">
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-100 dark:border-amber-800/30 text-center overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {/* Decorative Quote Icon */}
-              <div className="absolute top-4 left-6 text-6xl text-amber-200 dark:text-amber-800/20 font-serif opacity-50">"</div>
-              
-              <p className="relative z-10 text-lg md:text-xl text-amber-900 dark:text-amber-100 font-medium leading-relaxed font-serif">
-                أبا عبد الله أحمد بن محمد بن حنبل يقول : <br/>
-                <span className="block mt-2 italic">
-                " أصول السنة عندنا : التمسك بما كان عليه أصحاب رسول الله - صلى الله عليه وسلم - والاقتداء بهم ، وترك البدع ، وكل بدعة فهي ضلالة "
-                </span>
-              </p>
-              
-              <div className="mt-4 flex justify-center">
-                <div className="w-12 h-1 bg-amber-200 dark:bg-amber-800 rounded-full opacity-50" />
-              </div>
-            </div>
-          </div>
+        {/* Page Content */}
+        <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in">
+          <Outlet />
         </main>
 
-        {/* Fixed Footer */}
-        <footer className="absolute bottom-0 left-0 right-0 h-[60px] flex items-center justify-between px-8
-                         bg-white/90 dark:bg-background-paper-dark/90 backdrop-blur-md
-                         border-t border-gray-100 dark:border-gray-800
-                         text-xs z-30 transition-colors shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-          
-          {/* Left: Project Repo */}
-          <div className="flex items-center gap-4">
-            <a href="https://github.com/Mostafa-Elmoalem/impulse" target="_blank" rel="noopener noreferrer"
-               className="flex items-center gap-2 text-foreground-muted hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-medium">
-              <GitBranch size={14} />
-              <span>Impulse Repository</span>
-            </a>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <span className="text-foreground-muted">© 2025 Impulse</span>
-          </div>
+        {/* Footer (Developers - Centered) */}
+        <footer className="py-8 border-t border-gray-200 dark:border-gray-800/50 mt-auto">
+          <div className="container mx-auto px-6 text-center">
+            
+            {/* Wisdom Quote */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic mb-4 font-medium font-serif">
+              "Time is like a sword; if you don't cut it, it cuts you." — Imam Al-Shafi'i
+            </p>
 
-          {/* Right: Developers */}
-          <div className="flex items-center gap-6">
-            {/* Mostafa */}
-            <div className="flex items-center gap-2">
-              <span className="text-foreground-muted hidden sm:inline">Mostafa Elmoalem</span>
-              <div className="flex gap-1">
-                <a href="https://github.com/Mostafa-Elmoalem" target="_blank" rel="noreferrer" 
-                   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-[#333] dark:text-gray-400 dark:hover:text-white transition-colors">
-                  <Github size={14} />
-                </a>
-                <a href="https://www.linkedin.com/in/mostafa-elmoalem-782a821ba/" target="_blank" rel="noreferrer"
-                   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-[#0077b5] dark:text-gray-400 dark:hover:text-[#0077b5] transition-colors">
-                  <Linkedin size={14} />
-                </a>
+            {/* Developers Info */}
+            <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-600">
+              <div className="flex items-center gap-1.5">
+                <span>Developed with</span>
+                <Heart size={10} className="text-red-500 fill-current animate-pulse" />
+                <span>by</span>
+              </div>
+              
+              <div className="flex items-center gap-4 font-semibold text-gray-600 dark:text-gray-400">
+                <a href="#" className="hover:text-brand-600 transition-colors">Mostafa Elmoalem</a>
+                <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></span>
+                <a href="#" className="hover:text-brand-600 transition-colors">Backend Developer</a>
+              </div>
+
+              <div className="mt-2 text-[10px] uppercase tracking-widest opacity-60">
+                © 2025 Impulse Project. All rights reserved.
               </div>
             </div>
 
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-
-            {/* Ahmed */}
-            <div className="flex items-center gap-2">
-              <span className="text-foreground-muted hidden sm:inline">Ahmed Fekry</span>
-              <a href="https://github.com/A-Fekry/" target="_blank" rel="noreferrer"
-                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-[#333] dark:text-gray-400 dark:hover:text-white transition-colors">
-                <Github size={14} />
-              </a>
-            </div>
           </div>
         </footer>
+
       </div>
 
+      {/* Task Modal (Global) */}
       <TaskFormModal 
-        isOpen={isTaskModalOpen}
-        onClose={closeTaskModal}
-        initialDate={selectedDate}
+        isOpen={isTaskModalOpen} 
+        onClose={closeTaskModal} 
       />
     </div>
   );

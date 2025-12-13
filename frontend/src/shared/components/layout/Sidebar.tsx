@@ -2,17 +2,19 @@ import { NavLink } from 'react-router-dom';
 import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { DashboardStats } from '@/features/dashboard/api/dashboardApi';
+import { useUIStore } from '@/shared/stores/useUIStore';
 
 interface SidebarProps {
   stats?: DashboardStats;
 }
 
 export const Sidebar = ({ stats }: SidebarProps) => {
+  const { isSidebarOpen, closeSidebar } = useUIStore();
+
   const doneCount = stats?.completedTasks || 0;
   const pendingCount = stats?.pendingTasks || 0;
   const score = stats?.dailyScore || 0;
   
-  // Calculate Focus Time (e.g. 125 mins -> 2h 5m)
   const focusMinutes = stats?.totalFocusTime || 0;
   const hours = Math.floor(focusMinutes / 60);
   const minutes = focusMinutes % 60;
@@ -24,50 +26,68 @@ export const Sidebar = ({ stats }: SidebarProps) => {
   ];
 
   return (
-    <aside className="w-[280px] h-full fixed left-0 top-0 bg-background-paper dark:bg-background-paper-dark 
-                      border-r border-gray-100 dark:border-gray-800 shadow-soft z-30 flex flex-col transition-colors">
+    // SIDEBAR ISOLATION:
+    // - bg-white (Clean background)
+    // - border-r border-gray-200 (Distinct right border)
+    <aside className={cn(
+      "w-[280px] h-full fixed left-0 top-0 z-50 flex flex-col transition-transform duration-300 ease-out",
+      "bg-white dark:bg-background-paper-dark border-r border-gray-200 dark:border-gray-800",
+      isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+      "md:translate-x-0"
+    )}>
+      
       {/* Logo Area */}
-      <div className="p-8 pb-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-glow">
+      <div className="h-[72px] flex items-center gap-3 px-6 border-b border-gray-100 dark:border-gray-800/50">
+        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-brand-500/20">
           I
         </div>
-        <span className="text-2xl font-bold text-foreground dark:text-white tracking-tight">Impulse</span>
+        <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Impulse</span>
       </div>
 
       {/* Nav Links */}
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <nav className="flex-1 px-3 space-y-1 mt-6">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={() => closeSidebar()}
             className={({ isActive }) => cn(
-              "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-medium text-sm",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group font-medium text-sm",
               isActive 
-                ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-100 shadow-sm" 
-                : "text-foreground-muted dark:text-foreground-muted-dark hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-foreground dark:hover:text-white"
+                ? "bg-gray-100 dark:bg-brand-900/20 text-brand-700 dark:text-brand-100 border border-gray-200 dark:border-transparent" 
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white"
             )}
           >
-            <item.icon size={20} className={cn("transition-transform group-hover:scale-110")} />
-            {item.label}
+            {/* ✅ الحل هنا: استخدام دالة للوصول لـ isActive */}
+            {({ isActive }) => (
+              <>
+                <item.icon 
+                  size={18} 
+                  className={cn(
+                    "transition-transform group-hover:scale-105 opacity-80 group-hover:opacity-100", 
+                    isActive && "text-brand-600 dark:text-brand-400"
+                  )} 
+                />
+                {item.label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
       {/* Tasks Summary Widget */}
-      <div className="mx-4 mb-8 p-5 rounded-3xl bg-background dark:bg-background-dark border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
-        {/* Decorative background blob */}
-        <div className="absolute -top-10 -right-10 w-24 h-24 bg-brand-500/5 rounded-full blur-2xl group-hover:bg-brand-500/10 transition-colors" />
+      <div className="mx-3 mb-6 p-4 rounded-xl bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-gray-800 relative overflow-hidden">
         
-        <h3 className="text-xs font-bold text-foreground-muted dark:text-foreground-muted-dark uppercase tracking-wider mb-4 flex items-center gap-2">
+        <h3 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
           Daily Summary
         </h3>
-        <div className="space-y-4">
-          <SummaryRow icon={CheckCircle2} color="text-status-success" label="Done" value={doneCount} />
-          <SummaryRow icon={Clock} color="text-status-warning" label="Pending" value={pendingCount} />
-          <SummaryRow icon={Hourglass} color="text-status-info" label="Focus" value={focusTimeText} />
+        <div className="space-y-2.5">
+          <SummaryRow icon={CheckCircle2} color="text-emerald-600" label="Done" value={doneCount} />
+          <SummaryRow icon={Clock} color="text-amber-600" label="Pending" value={pendingCount} />
+          <SummaryRow icon={Hourglass} color="text-blue-600" label="Focus" value={focusTimeText} />
           
-          <div className="pt-2 border-t border-gray-200 dark:border-gray-700 mt-2">
-             <SummaryRow icon={Zap} color="text-brand-500" label="Score" value={score} />
+          <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700 mt-2.5">
+             <SummaryRow icon={Zap} color="text-brand-600" label="Score" value={score} isScore />
           </div>
         </div>
       </div>
@@ -75,14 +95,12 @@ export const Sidebar = ({ stats }: SidebarProps) => {
   );
 };
 
-const SummaryRow = ({ icon: Icon, color, label, value }: any) => (
-  <div className="flex justify-between items-center text-sm">
-    <div className="flex items-center gap-2.5 text-foreground dark:text-gray-300">
-      <div className={cn("p-1.5 rounded-lg bg-white dark:bg-gray-800 shadow-sm", color)}>
-        <Icon size={14} />
-      </div>
+const SummaryRow = ({ icon: Icon, color, label, value, isScore }: any) => (
+  <div className="flex justify-between items-center text-xs">
+    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+      <Icon size={14} className={color} />
       <span className="font-medium">{label}</span>
     </div>
-    <span className="font-bold text-foreground dark:text-white">{value}</span>
+    <span className={cn("font-bold tabular-nums", isScore ? "text-brand-700 dark:text-brand-400" : "text-gray-900 dark:text-white")}>{value}</span>
   </div>
 );
