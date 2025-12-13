@@ -81,6 +81,11 @@ export const Header = () => {
           <Menu size={22} />
         </button>
 
+        {/* Logo (Mobile) - Only show if sidebar is closed otherwise it duplicates */}
+        <div className="md:hidden flex items-center gap-2">
+           <img src="/public/logo.webp" alt="Impulse Logo" className="w-8 h-8 object-contain" />
+        </div>
+
         {/* Date Picker */}
         <div 
           className="group relative cursor-pointer flex items-center gap-3 select-none"
