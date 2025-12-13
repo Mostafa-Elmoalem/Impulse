@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { CheckCircle2, Clock, Zap, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/Button';
 import { Task } from '../types';
 import { cn } from '@/shared/utils/cn';
+import { format, differenceInMinutes, parse, addMinutes } from 'date-fns';
+import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+
+// Sub-components
+import { VictoryOverlay } from './completion/VictoryOverlay';
+import { CompletionHeader } from './completion/CompletionHeader';
+import { TimeEntry } from './completion/TimeEntry';
+import { ScoreBreakdown } from './completion/ScoreBreakdown';
 
 interface TaskCompletionModalProps {
   isOpen: boolean;
@@ -17,90 +25,140 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
   onConfirm,
   task
 }) => {
-  // الافتراضي: الوقت المخطط له هو الوقت الفعلي (يمكن للمستخدم تعديله)
-  const [actualTime, setActualTime] = useState(task.expectedTime);
+  const queryClient = useQueryClient();
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [showVictory, setShowVictory] = useState(false);
+  const [displayedPoints, setDisplayedPoints] = useState(0);
+  
+  // Calculate remaining tasks
+  const tasks = queryClient.getQueryData<Task[]>(QUERY_KEYS.TASKS) || [];
+  const remainingTasks = Math.max(0, tasks.filter(t => !t.done).length - 1);
 
-  // حساب النقاط التقريبي (مجرد عرض)
-  const calculatePoints = (time: number) => {
-    let multiplier = 1;
-    if (task.priority === 'urgent') multiplier = 2.0;
-    if (task.priority === 'high') multiplier = 1.7;
-    if (task.priority === 'medium') multiplier = 1.3;
-    
-    // معادلة بسيطة: (الوقت / 10) * الأولوية
-    return Math.round((time / 10) * multiplier * 10) / 10;
+  // Initialize
+  useEffect(() => {
+    if (isOpen) {
+      setShowVictory(false);
+      setDisplayedPoints(0);
+      const now = new Date();
+      const defaultStart = task.startTime 
+        ? task.startTime 
+        : format(addMinutes(now, -task.expectedTime), 'HH:mm');
+      const defaultEnd = format(now, 'HH:mm');
+      setStartTime(defaultStart);
+      setEndTime(defaultEnd);
+    }
+  }, [isOpen, task]);
+
+  // Logic
+  const calculateDuration = () => {
+    try {
+      const now = new Date();
+      const s = parse(startTime, 'HH:mm', now);
+      const e = parse(endTime, 'HH:mm', now);
+      let diff = differenceInMinutes(e, s);
+      if (diff < 0) diff += 1440; 
+      return diff;
+    } catch {
+      return task.expectedTime;
+    }
   };
 
-  const points = calculatePoints(actualTime);
+  const actualDuration = calculateDuration();
+  const timeDiff = task.expectedTime - actualDuration;
+
+  // Points Logic
+  const calculatePointsDetails = () => {
+    let base = 10;
+    const priorityMult = task.priority === 'urgent' ? 2.0 : task.priority === 'high' ? 1.5 : task.priority === 'medium' ? 1.2 : 1.0;
+    
+    // Base Points (Task Value)
+    const calculatedBase = Math.round(base * priorityMult);
+
+    // Bonus Points
+    let bonus = 0;
+    if (timeDiff > 0) {
+      bonus = Math.min(10, Math.floor(timeDiff / 5));
+    } else if (timeDiff < 0) {
+      bonus = -Math.min(5, Math.ceil(Math.abs(timeDiff) / 10));
+    }
+
+    return { base: calculatedBase, bonus, total: calculatedBase + bonus };
+  };
+
+  const pointsData = calculatePointsDetails();
+
+  // Animations
+  const handleConfirm = () => {
+    setShowVictory(true);
+    let start = 0;
+    const duration = 800; // Fast
+    const stepTime = 16;
+    const steps = duration / stepTime;
+    const increment = pointsData.total / steps;
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= pointsData.total) {
+        setDisplayedPoints(pointsData.total);
+        clearInterval(timer);
+      } else {
+        setDisplayedPoints(Math.floor(start));
+      }
+    }, stepTime);
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center p-4 sm:p-0">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       
-      <div className="relative bg-white dark:bg-gray-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 animate-slide-in-up sm:animate-scale-in">
+      <div className={cn(
+        "relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]",
+      )}>
         
-        {/* Header with Celebration Icon */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 text-green-600 dark:text-green-400 shadow-sm animate-bounce">
-            <CheckCircle2 size={36} strokeWidth={3} />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Task Completed!</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-1 px-4">
-            "{task.name}"
-          </p>
+        {/* Victory Screen */}
+        {showVictory && (
+          <VictoryOverlay 
+            points={displayedPoints} 
+            basePoints={pointsData.base}
+            bonusPoints={pointsData.bonus}
+            timeDiff={timeDiff} 
+            remainingTasks={remainingTasks}
+            onContinue={() => onConfirm(actualDuration)} 
+          />
+        )}
+
+        {/* --- Content --- */}
+        <CompletionHeader taskName={task.name} onClose={onClose} />
+
+        <div className="p-6 space-y-6 overflow-y-auto">
+          <TimeEntry 
+            startTime={startTime}
+            setStartTime={setStartTime}
+            endTime={endTime}
+            setEndTime={setEndTime}
+            taskStartTime={task.startTime}
+            taskEndTime={task.endTime}
+            expectedTime={task.expectedTime}
+            actualDuration={actualDuration}
+            timeDiff={timeDiff}
+          />
+          
+          <ScoreBreakdown 
+            basePoints={pointsData.base}
+            bonusPoints={pointsData.bonus}
+            totalPoints={pointsData.total}
+          />
         </div>
 
-        {/* Time Confirmation Card */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-5 mb-6 border border-gray-100 dark:border-gray-700">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
-              <Clock size={16} /> Planned Time
-            </span>
-            <span className="font-semibold text-gray-900 dark:text-white">{task.expectedTime} min</span>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Actual Time (minutes)
-            </label>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setActualTime(Math.max(5, actualTime - 5))}
-                className="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100"
-              >
-                -
-              </button>
-              <div className="flex-1 text-center font-bold text-2xl text-brand-600 dark:text-brand-400">
-                {actualTime}
-              </div>
-              <button 
-                onClick={() => setActualTime(actualTime + 5)}
-                className="w-10 h-10 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Points Preview */}
-        <div className="flex items-center justify-center gap-2 text-amber-500 font-bold text-lg mb-8">
-          <Zap size={20} fill="currentColor" />
-          <span>+{points} Points Earned</span>
-        </div>
-
-        {/* Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
+        <div className="p-6 pt-0 mt-auto shrink-0">
           <Button 
-            onClick={() => onConfirm(actualTime)} 
-            className="bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20"
+            onClick={handleConfirm} 
+            className="w-full h-14 text-lg font-bold shadow-xl shadow-brand-500/20 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white active:scale-[0.98] transition-all"
           >
-            Confirm & Collect
+            Confirm Completion
           </Button>
         </div>
 
