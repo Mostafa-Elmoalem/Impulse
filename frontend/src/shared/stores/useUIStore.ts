@@ -6,10 +6,14 @@ interface UIState {
   openTaskModal: () => void;
   closeTaskModal: () => void;
 
-  // Sidebar (New)
+  // Sidebar (Mobile Visibility)
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;
+
+  // Sidebar (Desktop Collapse State)
+  isSidebarCollapsed: boolean;
+  toggleSidebarCollapsed: () => void;
 
   // Search
   searchQuery: string;
@@ -21,9 +25,14 @@ export const useUIStore = create<UIState>((set) => ({
   openTaskModal: () => set({ isTaskModalOpen: true }),
   closeTaskModal: () => set({ isTaskModalOpen: false }),
 
+  // Mobile Menu Logic
   isSidebarOpen: false,
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
+
+  // Desktop Collapse Logic (Default is NOT collapsed)
+  isSidebarCollapsed: false,
+  toggleSidebarCollapsed: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),

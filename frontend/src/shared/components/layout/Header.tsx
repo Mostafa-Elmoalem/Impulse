@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Moon, Sun, Calendar, Search, Plus, X, ChevronDown, RotateCcw, Menu } from 'lucide-react';
+import { Moon, Sun, Calendar, Search, Plus, X, ChevronDown, RotateCcw, Menu, PanelLeft } from 'lucide-react';
 import { format, isSameDay, differenceInCalendarDays, startOfToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useDateStore } from '@/shared/stores/useDateStore';
@@ -13,7 +13,7 @@ export const Header = () => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   
   const { selectedDate, setSelectedDate, resetToToday } = useDateStore();
-  const { openTaskModal, searchQuery, setSearchQuery, toggleSidebar } = useUIStore();
+  const { openTaskModal, searchQuery, setSearchQuery, toggleSidebar, toggleSidebarCollapsed, isSidebarCollapsed } = useUIStore();
   
   const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +66,15 @@ export const Header = () => {
   const relativeText = getRelativeDateText();
   const isToday = isSameDay(selectedDate, today);
 
+  // Unified Toggle Handler
+  const handleMenuToggle = () => {
+    if (window.innerWidth < 768) {
+      toggleSidebar(); // Mobile: Open Overlay
+    } else {
+      toggleSidebarCollapsed(); // Desktop: Collapse/Expand
+    }
+  };
+
   return (
     <header className="h-[72px] px-4 md:px-8 flex items-center justify-between gap-4 sticky top-0 z-30 
                        bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl 
@@ -73,18 +82,16 @@ export const Header = () => {
       
       {/* 1. Left: Menu & Date */}
       <div className="flex items-center gap-3 min-w-fit">
-        {/* Mobile Menu Button */}
+        
+        {/* Unified Toggle Button */}
         <button 
-          onClick={toggleSidebar}
-          className="md:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          onClick={handleMenuToggle}
+          className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          title="Toggle Menu"
         >
-          <Menu size={22} />
+          {/* Change Icon based on state/screen logic if desired, or keep generic Menu/Panel */}
+          <PanelLeft size={22} className={cn("transition-transform", isSidebarCollapsed && "rotate-180")} />
         </button>
-
-        {/* Logo (Mobile) - Only show if sidebar is closed otherwise it duplicates */}
-        <div className="md:hidden flex items-center gap-2">
-           <img src="/public/logo.webp" alt="Impulse Logo" className="w-8 h-8 object-contain" />
-        </div>
 
         {/* Date Picker */}
         <div 
