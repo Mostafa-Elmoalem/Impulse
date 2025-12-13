@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass, X } from 'lucide-react';
+import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass, X, BookOpen, Quote } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { DashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { useUIStore } from '@/shared/stores/useUIStore';
@@ -18,7 +18,6 @@ export const Sidebar = ({ stats }: SidebarProps) => {
   const focusMinutes = stats?.totalFocusTime || 0;
   const hours = Math.floor(focusMinutes / 60);
   const minutes = focusMinutes % 60;
-  // تنسيق الوقت ليظهر بشكل مختصر وواضح (مثلاً: 2h 30m)
   const focusTimeText = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
   const navItems = [
@@ -31,7 +30,7 @@ export const Sidebar = ({ stats }: SidebarProps) => {
       {/* Mobile Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300",
+          "fixed inset-0 bg-black/40 backdrop-blur-sm z-[59] md:hidden transition-opacity duration-300",
           isSidebarOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
         )}
         onClick={closeSidebar}
@@ -39,7 +38,7 @@ export const Sidebar = ({ stats }: SidebarProps) => {
 
       {/* Sidebar Container */}
       <aside className={cn(
-        "h-full fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out",
+        "h-full fixed left-0 top-0 z-[60] flex flex-col transition-all duration-300 ease-in-out",
         "bg-white dark:bg-background-paper-dark border-r border-gray-200 dark:border-gray-800",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         "md:translate-x-0",
@@ -74,7 +73,7 @@ export const Sidebar = ({ stats }: SidebarProps) => {
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 px-3 space-y-2 mt-6">
+        <nav className="flex-1 px-3 space-y-2 mt-6 overflow-y-auto scrollbar-hide">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -110,13 +109,61 @@ export const Sidebar = ({ stats }: SidebarProps) => {
           ))}
         </nav>
 
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* --- 🌟 Athar Section (Premium & Clear) 🌟 --- */}
+        {!isSidebarCollapsed && (
+          <div className="mx-3 mb-5 animate-fade-in">
+            <div className="relative overflow-hidden rounded-xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-orange-50/50 p-5 dark:from-amber-900/10 dark:to-orange-900/10 dark:border-amber-800/30 group transition-all duration-300 hover:shadow-md hover:border-amber-300/70">
+              
+              {/* Decorative Background Icon */}
+              <div className="absolute -right-4 -top-4 opacity-[0.07] dark:opacity-[0.05] transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
+                <BookOpen size={100} className="text-amber-900 dark:text-amber-500" />
+              </div>
+
+              {/* Quote Mark */}
+              <div className="absolute top-3 left-3 opacity-20">
+                 <Quote size={16} className="text-amber-800 dark:text-amber-500 rotate-180" />
+              </div>
+
+              {/* Text Content */}
+              <div className="relative z-10 text-center" dir="rtl">
+                
+                {/* Featured Header */}
+                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-2 drop-shadow-sm font-serif">
+                  "أُصُولُ السُّنَّةِ عِنْدَنَا"
+                </h4>
+
+                {/* The Quote Body */}
+                <p className="text-xs font-medium leading-relaxed text-gray-800 dark:text-gray-200 opacity-90 font-serif">
+                  التَّمَسُّكُ بِمَا كَانَ عَلَيْهِ أَصْحَابُ رَسُولِ اللَّهِ ﷺ، وَالِاقْتِدَاءُ بِهِمْ، وَتَرْكُ الْبِدَعِ، وَكُلُّ بِدْعَةٍ فَهِيَ ضَلَالَةٌ.
+                </p>
+                
+                {/* Decorative Divider */}
+                <div className="mx-auto my-3 h-px w-24 bg-gradient-to-r from-transparent via-amber-300 to-transparent dark:via-amber-700 opacity-70" />
+                
+                {/* Author Signature */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-[11px] font-bold tracking-wide text-amber-700 dark:text-amber-400">
+                    الإمام أحمد بن حنبل
+                  </span>
+                  <span className="text-[9px] text-amber-600/60 dark:text-amber-500/50 font-medium">
+                    رحمه الله
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- Tasks Summary Widget --- */}
         <div className={cn(
           "transition-all duration-300",
           isSidebarCollapsed ? "px-2 mb-6" : "px-3 mb-6"
         )}>
           {!isSidebarCollapsed ? (
-            // 1. Full Widget (Expanded State)
+            // Full Widget
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-gray-800 relative overflow-hidden animate-fade-in">
               <h3 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                 Daily Summary
@@ -131,41 +178,26 @@ export const Sidebar = ({ stats }: SidebarProps) => {
               </div>
             </div>
           ) : (
-            // 2. Mini Widget (Collapsed State)
+            // Mini Widget
             <div className="py-4 flex flex-col items-center gap-4 bg-gray-50 dark:bg-background-dark rounded-xl border border-gray-200 dark:border-gray-800 animate-fade-in">
-               
-               {/* Done */}
                <div className="flex flex-col items-center gap-1 group relative cursor-help">
                  <CheckCircle2 size={18} className="text-emerald-600" />
                  <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{doneCount}</span>
-                 <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Done Tasks</span>
                </div>
-               
-               {/* Pending */}
                <div className="flex flex-col items-center gap-1 group relative cursor-help">
                  <Clock size={18} className="text-amber-600" />
                  <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{pendingCount}</span>
-                 <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Pending Tasks</span>
                </div>
-
-               {/* Focus Time (Added Here) */}
                <div className="flex flex-col items-center gap-1 group relative cursor-help">
                  <Hourglass size={18} className="text-blue-600" />
-                 {/* whitespace-nowrap يمنع النص من النزول لسطر جديد */}
                  <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap tracking-tight">
                    {focusTimeText}
                  </span>
-                 <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Focus Time</span>
                </div>
-
-               {/* Divider */}
                <div className="w-8 h-[1px] bg-gray-200 dark:bg-gray-700 my-1" />
-               
-               {/* Score */}
                <div className="flex flex-col items-center gap-1 group relative cursor-help">
                  <Zap size={18} className="text-brand-600" />
                  <span className="text-[10px] font-bold text-brand-700 dark:text-brand-400">{score}</span>
-                 <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Daily Score</span>
                </div>
             </div>
           )}

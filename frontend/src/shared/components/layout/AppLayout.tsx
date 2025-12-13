@@ -2,13 +2,13 @@ import { Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { Footer } from './Footer'; // ✅ Import Footer
 import { ProgressBar } from '../ui/ProgressBar';
 import { TaskFormModal } from '@/features/tasks/components/TaskFormModal';
-import { GlobalTaskCompletion } from '@/features/tasks/components/GlobalTaskCompletion'; // Import New Component
+import { GlobalTaskCompletion } from '@/features/tasks/components/GlobalTaskCompletion';
 import { useUIStore } from '@/shared/stores/useUIStore';
 import { getDashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
-import { Heart } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 
 export const AppLayout = () => {
@@ -24,14 +24,14 @@ export const AppLayout = () => {
   const progressPercentage = (score / target) * 100;
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors flex">
+    <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors flex relative isolate">
       
       {/* 1. Sidebar */}
       <Sidebar stats={stats} />
 
       {/* 2. Main Content Wrapper */}
       <div className={cn(
-        "flex-1 flex flex-col min-h-screen transition-all duration-300 relative",
+        "flex-1 flex flex-col min-h-screen transition-all duration-300 relative z-0",
         isSidebarCollapsed ? "md:pl-[80px]" : "md:pl-[280px]"
       )}>
         
@@ -39,54 +39,31 @@ export const AppLayout = () => {
         <Header />
 
         {/* Progress Bar */}
-        <div className="w-full px-4 md:px-8 mt-2 relative z-[40]">
+        <div className="w-full px-4 md:px-8 mt-4 relative ">
            <ProgressBar progress={Math.round(progressPercentage)} />
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in z-0">
+        <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in relative z-0">
           <Outlet />
         </main>
 
-        {/* Footer */}
-        <footer className="py-8 border-t border-gray-200 dark:border-gray-800/50 mt-auto">
-          <div className="container mx-auto px-6 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400 italic mb-4 font-medium font-serif">
-              "Time is like a sword; if you don't cut it, it cuts you." — Imam Al-Shafi'i
-            </p>
-
-            <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <span>Developed with</span>
-                <Heart size={10} className="text-red-500 fill-current animate-pulse" />
-                <span>by</span>
-              </div>
-              
-              <div className="flex items-center gap-4 font-semibold text-gray-600 dark:text-gray-400">
-                <a href="#" className="hover:text-brand-600 transition-colors">Mostafa Elmoalem</a>
-                <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-                <a href="#" className="hover:text-brand-600 transition-colors">Backend Developer</a>
-              </div>
-
-              <div className="mt-2 text-[10px] uppercase tracking-widest opacity-60">
-                © 2025 Impulse Project. All rights reserved.
-              </div>
-            </div>
-          </div>
-        </footer>
+        {/* ✅ Footer Component */}
+        <Footer />
 
       </div>
 
-      {/* --- Global Modals --- */}
-      
-      {/* 1. Add Task Modal */}
-      <TaskFormModal 
-        isOpen={isTaskModalOpen} 
-        onClose={closeTaskModal} 
-      />
+      {/* Global Modals */}
+      <div className="relative z-[1200]">
+        <TaskFormModal 
+          isOpen={isTaskModalOpen} 
+          onClose={closeTaskModal} 
+        />
+      </div>
 
-      {/* 2. Completion Modal (Fixes Z-Index Issue) */}
-      <GlobalTaskCompletion />
+      <div className="relative z-[1300]">
+        <GlobalTaskCompletion />
+      </div>
 
     </div>
   );
