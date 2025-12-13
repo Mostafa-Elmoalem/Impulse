@@ -62,7 +62,7 @@ export const ProgressBar = ({ progress }: ProgressBarProps) => {
           {/* الفقاعة التي تتحرك مع الرقم */}
           <div 
             className={cn(
-              "absolute -right-3 -top-9 px-2 py-1 rounded-lg text-[10px] font-bold shadow-md transition-all duration-500 transform",
+              "absolute -right-3 -top-8 px-2 py-1 rounded-lg text-[10px] font-bold shadow-md transition-all duration-500 transform",
               styles.bubble,
               "after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-current" // السهم الصغير تحت الفقاعة
             )}

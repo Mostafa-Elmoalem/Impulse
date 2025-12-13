@@ -38,7 +38,7 @@ export const AppLayout = () => {
         <Header />
 
         {/* Progress Bar */}
-        <div className="w-full px-4 md:px-8 mt-2 z-50">
+        <div className="w-full px-4 md:px-8 mt-2 ">
            <ProgressBar progress={Math.round(progressPercentage)} />
         </div>
 
