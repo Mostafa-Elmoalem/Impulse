@@ -1,29 +1,36 @@
-import React, { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import React, { useEffect } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Plus, Trash2, ListTodo, CheckSquare } from 'lucide-react';
+import { X, CheckSquare, ListTodo } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
-import { Input, Textarea } from '@/shared/components/ui/Input';
 import { useCreateTask, useUpdateTask } from '../hooks/useTasks';
-import type { Task, Priority, TaskType } from '../types';
+import type { Task } from '../types';
 import { cn } from '@/shared/utils/cn';
+import { format, addMinutes, differenceInMinutes, parse } from 'date-fns';
 
-// Zod Schema
+// Sub-components
+import { TaskHeader } from './form/TaskHeader';
+import { TaskScheduling } from './form/TaskScheduling';
+import { TaskPriority } from './form/TaskPriority';
+import { TaskSubtasks } from './form/TaskSubtasks';
+
+// --- Validation Schema ---
 const taskSchema = z.object({
-  name: z.string().min(1, 'Task name is required'),
+  name: z.string().min(1, 'Task title is required'),
   description: z.string().optional(),
   day: z.string().min(1, 'Date is required'),
+  startTime: z.string().min(1, 'Start time required'),
+  endTime: z.string().min(1, 'End time required'),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  type: z.enum(['regular', 'project']),
-  expectedTime: z.number().min(5, 'Minimum 5 minutes'),
+  type: z.enum(['regular', 'big_task']),
   subTasks: z.array(z.object({
-    name: z.string().min(1, 'Subtask name required'),
-    timeEstimate: z.number().optional()
+    name: z.string().optional(), 
+    isCompleted: z.boolean().default(false)
   })).optional()
 });
 
-type TaskFormValues = z.infer<typeof taskSchema>;
+export type TaskFormValues = z.infer<typeof taskSchema>;
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -42,52 +49,81 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const updateTask = useUpdateTask();
   const isEditing = !!task;
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<TaskFormValues>({
+  const now = new Date();
+  const defaultStart = format(now, 'HH:00');
+  const defaultEnd = format(addMinutes(now, 60), 'HH:00');
+
+  const methods = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: task
-      ? {
+    defaultValues: {
+      name: '',
+      description: '',
+      day: format(new Date(), 'yyyy-MM-dd'),
+      priority: 'medium',
+      type: 'regular',
+      startTime: defaultStart,
+      endTime: defaultEnd,
+      subTasks: []
+    },
+  });
+
+  const { reset, handleSubmit, setValue, watch } = methods;
+  const taskType = watch('type');
+
+  // Load task data when editing
+  useEffect(() => {
+    if (isOpen) {
+      if (task) {
+        reset({
           name: task.name,
           description: task.description || '',
           day: task.day,
           priority: task.priority,
           type: task.type || 'regular',
-          expectedTime: task.expectedTime || 60,
-          subTasks: task.subTasks?.map(st => ({ name: st.name, timeEstimate: st.timeEstimate })) || []
-        }
-      : {
-          day: initialDate ? initialDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          startTime: task.startTime || defaultStart,
+          endTime: task.endTime || defaultEnd,
+          subTasks: task.subTasks?.map(st => ({ name: st.name, isCompleted: st.isCompleted })) || []
+        });
+      } else {
+        reset({
+          name: '',
+          description: '',
+          day: initialDate ? format(initialDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
           priority: 'medium',
           type: 'regular',
-          expectedTime: 60,
+          startTime: defaultStart,
+          endTime: defaultEnd,
           subTasks: []
-        },
-  });
+        });
+      }
+    }
+  }, [isOpen, task, initialDate, reset]);
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "subTasks"
-  });
-
-  const taskType = watch('type');
-  const selectedPriority = watch('priority');
+  const calculateDuration = (start: string, end: string) => {
+    try {
+      const s = parse(start, 'HH:mm', new Date());
+      const e = parse(end, 'HH:mm', new Date());
+      let diff = differenceInMinutes(e, s);
+      if (diff < 0) diff += 1440;
+      return diff;
+    } catch { return 60; }
+  };
 
   const onSubmit = async (data: TaskFormValues) => {
     try {
+      // Filter empty subtasks
+      const validSubTasks = data.subTasks
+        ?.filter(st => st.name && st.name.trim().length > 0)
+        .map(st => ({
+          id: crypto.randomUUID(),
+          isCompleted: false,
+          name: st.name!
+        }));
+
       const formattedData: any = {
         ...data,
-        subTasks: data.subTasks?.map(st => ({
-          id: crypto.randomUUID(), // Generate ID for subtasks
-          isCompleted: false,
-          ...st
-        }))
+        expectedTime: calculateDuration(data.startTime, data.endTime),
+        subTasks: validSubTasks
       };
 
       if (isEditing && task) {
@@ -95,7 +131,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       } else {
         await createTask.mutateAsync(formattedData);
       }
-      reset();
       onClose();
     } catch (error) {
       console.error(error);
@@ -106,164 +141,87 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-3xl shadow-modal w-full max-w-lg max-h-[90vh] overflow-hidden animate-scale-in flex flex-col">
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-scale-in flex flex-col border border-gray-100 dark:border-gray-800">
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            {isEditing ? 'Edit Task' : 'New Task'}
-            <span className="text-sm font-normal text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-              {watch('expectedTime')}m
-            </span>
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+        {/* Modal Header */}
+        <div className="flex items-center justify-end px-4 py-3">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="overflow-y-auto p-6 scrollbar-hide flex-1">
-          <form id="task-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* Task Name */}
-            <div className="space-y-4">
-              <Input
-                placeholder="What needs to be done?"
-                {...register('name')}
-                className="text-lg font-medium border-transparent px-0 rounded-none border-b border-gray-200 dark:border-gray-800 focus:ring-0 focus:border-brand-500 bg-transparent placeholder:text-gray-400"
-                autoFocus
-              />
-              {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+        <div className="overflow-y-auto px-6 pb-6 scrollbar-hide flex-1">
+          <FormProvider {...methods}>
+            <form id="task-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               
-              <Textarea
-                {...register('description')}
-                placeholder="Add details, notes, or links..."
-                className="resize-none min-h-[80px] bg-gray-50 dark:bg-gray-800/50 border-0 focus:ring-1 focus:ring-brand-500/20"
-              />
-            </div>
+              {/* 1. Header (Title & Description) */}
+              <TaskHeader />
 
-            {/* Task Type Switcher */}
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setValue('type', 'regular')}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
-                  taskType === 'regular' 
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-brand-600 dark:text-white" 
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
-                )}
-              >
-                <CheckSquare size={16} /> Regular
-              </button>
-              <button
-                type="button"
-                onClick={() => setValue('type', 'project')}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all",
-                  taskType === 'project' 
-                    ? "bg-white dark:bg-gray-700 shadow-sm text-brand-600 dark:text-white" 
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
-                )}
-              >
-                <ListTodo size={16} /> Project
-              </button>
-            </div>
+              {/* 2. Scheduling (Date & Time) */}
+              <TaskScheduling />
 
-            {/* Config Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Date"
-                type="date"
-                {...register('day')}
-                className="bg-white dark:bg-gray-900"
-              />
-              
-              <Input
-                label="Duration (min)"
-                type="number"
-                {...register('expectedTime', { valueAsNumber: true })}
-                className="bg-white dark:bg-gray-900"
-              />
-            </div>
+              {/* 3. Priority */}
+              <TaskPriority />
 
-            {/* Priority Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Priority Level</label>
-              <div className="grid grid-cols-4 gap-2">
-                {(['low', 'medium', 'high', 'urgent'] as Priority[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setValue('priority', p)}
-                    className={cn(
-                      "py-2 px-1 rounded-lg text-xs font-bold uppercase tracking-wider border-2 transition-all",
-                      selectedPriority === p
-                        ? p === 'urgent' ? "bg-red-500 border-red-500 text-white" 
-                        : p === 'high' ? "bg-orange-500 border-orange-500 text-white"
-                        : p === 'medium' ? "bg-amber-500 border-amber-500 text-white"
-                        : "bg-emerald-500 border-emerald-500 text-white"
-                        : "bg-transparent border-gray-200 dark:border-gray-800 text-gray-500 hover:border-gray-300"
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
+              {/* 4. Task Type & Subtasks */}
+              <div className="pt-2">
+                 <div className="flex items-center gap-4 mb-4">
+                    <button
+                       type="button"
+                       onClick={() => setValue('type', 'regular')}
+                       className={cn(
+                         "flex items-center gap-2 text-sm font-semibold transition-colors",
+                         taskType === 'regular' ? "text-gray-900 dark:text-white" : "text-gray-400 hover:text-gray-600"
+                       )}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", taskType === 'regular' ? "border-brand-600" : "border-gray-300")}>
+                         {taskType === 'regular' && <div className="w-2 h-2 bg-brand-600 rounded-full" />}
+                      </div>
+                      Regular Task
+                    </button>
+
+                    <button
+                       type="button"
+                       onClick={() => setValue('type', 'big_task')}
+                       className={cn(
+                         "flex items-center gap-2 text-sm font-semibold transition-colors",
+                         taskType === 'big_task' ? "text-purple-600" : "text-gray-400 hover:text-gray-600"
+                       )}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", taskType === 'big_task' ? "border-purple-600" : "border-gray-300")}>
+                         {taskType === 'big_task' && <div className="w-2 h-2 bg-purple-600 rounded-full" />}
+                      </div>
+                      Big Task
+                    </button>
+                 </div>
+
+                 {/* Subtasks Component */}
+                 {taskType === 'big_task' && <TaskSubtasks />}
               </div>
-            </div>
 
-            {/* Subtasks (Only if Project) */}
-            {taskType === 'project' && (
-              <div className="space-y-3 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subtasks</label>
-                  <button
-                    type="button"
-                    onClick={() => append({ name: '', timeEstimate: 15 })}
-                    className="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1"
-                  >
-                    <Plus size={14} /> Add Step
-                  </button>
-                </div>
-                
-                <div className="space-y-2">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 items-center group">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1" />
-                      <Input
-                        {...register(`subTasks.${index}.name`)}
-                        placeholder={`Step ${index + 1}`}
-                        className="flex-1 h-9 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => remove(index)}
-                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                  {fields.length === 0 && (
-                    <p className="text-xs text-gray-400 italic text-center py-2">No subtasks yet.</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-          </form>
+            </form>
+          </FormProvider>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-6 pt-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" form="task-form" isLoading={isSubmitting} className="shadow-lg shadow-brand-500/20">
-            {isEditing ? 'Save Changes' : 'Create Task'}
-          </Button>
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/30">
+          <span className="text-xs text-gray-400 font-medium hidden sm:block">
+            {taskType === 'big_task' ? 'Press Enter to add next step' : ''}
+          </span>
+          <div className="flex gap-3 w-full sm:w-auto justify-end">
+            <Button variant="ghost" onClick={onClose} size="sm" className="text-gray-500">Cancel</Button>
+            <Button 
+              type="submit" 
+              form="task-form" 
+              isLoading={methods.formState.isSubmitting} 
+              size="sm" 
+              className="px-8 shadow-lg shadow-brand-500/20 rounded-xl"
+            >
+              {isEditing ? 'Save' : 'Create'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
