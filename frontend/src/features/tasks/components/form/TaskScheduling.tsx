@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { Input } from '@/shared/components/ui/Input';

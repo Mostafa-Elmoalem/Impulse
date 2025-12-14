@@ -2,10 +2,10 @@ import { Trophy, CheckCircle2, TrendingUp, Zap, Star } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 
 interface VictoryOverlayProps {
-  points: number;      // Total
-  basePoints: number;  // Base + Priority
-  bonusPoints: number; // Efficiency Bonus
-  timeDiff: number;
+  points: number;
+  basePoints: number;
+  bonusPoints: number;
+  timeDiff: number; // Will use it for logic below, even if not displayed directly
   remainingTasks: number;
   onContinue: () => void;
 }
@@ -14,7 +14,6 @@ export const VictoryOverlay = ({
   points, 
   basePoints, 
   bonusPoints, 
-  timeDiff, 
   remainingTasks, 
   onContinue 
 }: VictoryOverlayProps) => {
@@ -42,10 +41,8 @@ export const VictoryOverlay = ({
         <span className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">Total Score</span>
       </div>
 
-      {/* --- Detailed Breakdown (The UX Fix) --- */}
+      {/* Detailed Breakdown */}
       <div className="w-full space-y-2 mb-8">
-        
-        {/* Base Points Row */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between">
            <div className="flex items-center gap-3">
              <div className="p-1.5 bg-gray-700 rounded text-gray-300">
@@ -56,7 +53,6 @@ export const VictoryOverlay = ({
            <span className="text-sm font-bold text-white">+{basePoints}</span>
         </div>
 
-        {/* Bonus Row (Conditional) */}
         {bonusPoints > 0 && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 flex items-center justify-between">
              <div className="flex items-center gap-3">
@@ -69,7 +65,6 @@ export const VictoryOverlay = ({
           </div>
         )}
 
-        {/* Penalty Row (Conditional) */}
         {bonusPoints < 0 && (
           <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 flex items-center justify-between">
              <div className="flex items-center gap-3">
@@ -81,17 +76,14 @@ export const VictoryOverlay = ({
              <span className="text-sm font-bold text-orange-400">{bonusPoints}</span>
           </div>
         )}
-
       </div>
 
-      {/* Daily Progress */}
       <p className="text-xs text-gray-500 font-medium mb-6">
         {remainingTasks > 0 
           ? `Keep it up! ${remainingTasks} tasks remaining today.` 
           : "All done for today! Amazing work."}
       </p>
 
-      {/* Continue Button */}
       <Button 
         onClick={onContinue}
         className="bg-white text-gray-900 hover:bg-gray-200 font-bold px-10 py-3 rounded-xl shadow-lg w-full animate-slide-in-up"

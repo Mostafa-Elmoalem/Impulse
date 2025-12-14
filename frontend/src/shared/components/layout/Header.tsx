@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Moon, Sun, Calendar, Search, Plus, X, ChevronDown, RotateCcw, Menu, PanelLeft } from 'lucide-react';
+import { Moon, Sun, Calendar, Search, Plus, X, ChevronDown, RotateCcw, PanelLeft } from 'lucide-react'; // ✅ Removed Menu
 import { format, isSameDay, differenceInCalendarDays, startOfToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useDateStore } from '@/shared/stores/useDateStore';
@@ -66,12 +66,11 @@ export const Header = () => {
   const relativeText = getRelativeDateText();
   const isToday = isSameDay(selectedDate, today);
 
-  // Unified Toggle Handler
   const handleMenuToggle = () => {
     if (window.innerWidth < 768) {
-      toggleSidebar(); // Mobile: Open Overlay
+      toggleSidebar();
     } else {
-      toggleSidebarCollapsed(); // Desktop: Collapse/Expand
+      toggleSidebarCollapsed();
     }
   };
 
@@ -80,20 +79,16 @@ export const Header = () => {
                        bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl 
                        border-b border-gray-200/80 dark:border-gray-800/80 transition-all supports-[backdrop-filter]:bg-white/60">
       
-      {/* 1. Left: Menu & Date */}
       <div className="flex items-center gap-3 min-w-fit">
         
-        {/* Unified Toggle Button */}
         <button 
           onClick={handleMenuToggle}
           className="p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           title="Toggle Menu"
         >
-          {/* Change Icon based on state/screen logic if desired, or keep generic Menu/Panel */}
           <PanelLeft size={22} className={cn("transition-transform", isSidebarCollapsed && "rotate-180")} />
         </button>
 
-        {/* Date Picker */}
         <div 
           className="group relative cursor-pointer flex items-center gap-3 select-none"
           onClick={() => dateInputRef.current?.showPicker()}
@@ -143,7 +138,6 @@ export const Header = () => {
         )}
       </div>
 
-      {/* 2. Center: Live Time (Hidden on small screens) */}
       <div className={cn(
         "absolute left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center transition-opacity duration-300",
         isSearchExpanded ? "opacity-0 pointer-events-none" : "opacity-100"
@@ -156,10 +150,8 @@ export const Header = () => {
         </span>
       </div>
 
-      {/* 3. Right: Search & Actions */}
       <div className="flex items-center gap-2 md:gap-3 justify-end flex-1 md:flex-none">
         
-        {/* Expandable Search */}
         <div className={cn(
           "flex items-center bg-white dark:bg-gray-800 rounded-lg border transition-all duration-300 overflow-hidden",
           isSearchExpanded 

@@ -23,7 +23,7 @@ export const useUpdateTask = () => {
 
   return useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: Partial<Task> }) =>
-      updateTask(id, updates),
+      updateTask({ id, updates }), // ✅ Fixed call signature
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_STATS });
@@ -56,11 +56,9 @@ export const useToggleTaskDone = () => {
 
   return useMutation({
     mutationFn: ({ id, done }: { id: number; done: boolean }) =>
-      updateTask(id, { done }),
+      updateTask({ id, updates: { done } }), // ✅ Fixed call signature
     onMutate: async ({ id, done }) => {
-      // Optimistic update
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.TASKS });
-      
       const previousTasks = queryClient.getQueryData<Task[]>(QUERY_KEYS.TASKS);
       
       queryClient.setQueryData<Task[]>(QUERY_KEYS.TASKS, (old) =>
@@ -69,8 +67,8 @@ export const useToggleTaskDone = () => {
       
       return { previousTasks };
     },
-    onError: (error, variables, context) => {
-      // Rollback on error
+    // ✅ Removed unused variables (error, variables)
+    onError: (_error, _variables, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(QUERY_KEYS.TASKS, context.previousTasks);
       }

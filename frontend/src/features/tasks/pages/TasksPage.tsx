@@ -7,10 +7,9 @@ import { TaskItem } from '../components/TaskItem';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useDateStore } from '@/shared/stores/useDateStore';
 import { useUIStore } from '@/shared/stores/useUIStore';
-import { format, isSameDay, isValid, parseISO } from 'date-fns';
+import { format, isSameDay, isValid } from 'date-fns'; // ✅ Removed parseISO
 
 export const TasksPage = () => {
-  // Global State
   const { selectedDate } = useDateStore();
   const { searchQuery, openTaskModal } = useUIStore();
 
@@ -19,19 +18,15 @@ export const TasksPage = () => {
     queryFn: getTasks,
   });
 
-  // Filter Logic: Date AND Search Query (Safer Version)
   const filteredTasks = tasks.filter(task => {
     try {
-      // 1. Safety Check for Date
       if (!task.day) return false;
       
       const taskDate = new Date(task.day);
       if (!isValid(taskDate)) return false;
 
-      // 2. Filter by Date (Exact match)
       const matchesDate = isSameDay(taskDate, selectedDate);
       
-      // 3. Filter by Search (if exists)
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         return task.name.toLowerCase().includes(query) || 
@@ -57,7 +52,6 @@ export const TasksPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Clean Header - Just Title & Count */}
       <div className="flex items-end justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -79,7 +73,6 @@ export const TasksPage = () => {
         </div>
       </div>
 
-      {/* Tasks List */}
       <div className="space-y-3 min-h-[300px]">
         {isLoading ? (
           <div className="space-y-3">

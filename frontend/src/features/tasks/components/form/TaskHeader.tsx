@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
 import { Input, Textarea } from '@/shared/components/ui/Input';

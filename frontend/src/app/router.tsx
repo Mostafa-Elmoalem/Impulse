@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/stores/useAuthStore';
+// ✅ Removed unused useAuthStore
 import { AppLayout } from '@/shared/components/layout/AppLayout';
 
 const LoginPage = lazy(() =>
@@ -16,9 +16,6 @@ const TasksPage = lazy(() =>
   import('@/features/tasks/pages/TasksPage').then((m) => ({ default: m.TasksPage }))
 );
 
-// ============================================
-// LOADING FALLBACK
-// ============================================
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
     <div className="text-center">
@@ -28,40 +25,18 @@ const LoadingFallback = () => (
   </div>
 );
 
-// ============================================
-// AUTH GUARD - Protect Private Routes
-// ============================================
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-// const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
-
   return <>{children}</>;
 };
 
-// ============================================
-// REDIRECT IF AUTHENTICATED
-// ============================================
 const RedirectIfAuth = ({ children }: { children: React.ReactNode }) => {
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  // if (isAuthenticated) {
-  //   return <Navigate to="/tasks" replace />; // Changed to /tasks
-  // }
-
   return <>{children}</>;
 };
 
-// ============================================
-// MAIN ROUTER
-// ============================================
 export const AppRouter = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Public Routes */}
         <Route
           path="/login"
           element={
@@ -71,7 +46,6 @@ export const AppRouter = () => {
           }
         />
 
-        {/* Protected Routes with Layout */}
         <Route
           element={
             <RequireAuth>
@@ -83,17 +57,13 @@ export const AppRouter = () => {
           <Route path="/tasks" element={<TasksPage />} />
         </Route>
 
-        {/* Redirects */}
-        <Route path="/" element={<Navigate to="/tasks" replace />} /> {/* Default to Tasks */}
-        <Route path="*" element={<Navigate to="/tasks" replace />} /> {/* Fallback to Tasks */}
+        <Route path="/" element={<Navigate to="/tasks" replace />} />
+        <Route path="*" element={<Navigate to="/tasks" replace />} />
       </Routes>
     </Suspense>
   );
 };
 
-// ============================================
-// ROUTE CONSTANTS (for navigation)
-// ============================================
 export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',

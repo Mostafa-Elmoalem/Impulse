@@ -32,7 +32,9 @@ export const getTasks = async (): Promise<Task[]> => {
         priority: "high",
         done: false,
         expectedTime: 30,
-        points: 10
+        points: 10,
+        type: 'regular', // ✅ Added missing field
+        createdAt: Date.now() // ✅ Added missing field
       },
       {
         id: 2,
@@ -42,7 +44,9 @@ export const getTasks = async (): Promise<Task[]> => {
         priority: "medium",
         done: true,
         expectedTime: 15,
-        points: 5
+        points: 5,
+        type: 'regular', // ✅ Added missing field
+        createdAt: Date.now() // ✅ Added missing field
       }
     ];
     saveLocalTasks(dummyTasks);
@@ -57,14 +61,17 @@ export const createTask = async (data: Partial<Task>): Promise<Task> => {
   const tasks = getLocalTasks();
   
   const newTask: Task = {
-    id: Date.now(), // Generate unique ID based on timestamp
+    id: Date.now(),
     name: data.name || 'New Task',
     description: data.description || '',
     day: data.day || new Date().toISOString().split('T')[0],
     priority: data.priority || 'medium',
     done: false,
     expectedTime: data.expectedTime || 60,
-    points: 10, // Default points
+    points: 10,
+    type: data.type || 'regular', // ✅ Ensure fallback to 'regular' if undefined
+    createdAt: Date.now(),
+    subTasks: data.subTasks || [],
     ...data
   };
 
@@ -73,7 +80,7 @@ export const createTask = async (data: Partial<Task>): Promise<Task> => {
   return newTask;
 };
 
-export const updateTask = async (id: number, updates: Partial<Task>): Promise<Task> => {
+export const updateTask = async ({ id, updates }: { id: number; updates: Partial<Task> }): Promise<Task> => {
   await delay(300);
   const tasks = getLocalTasks();
   const index = tasks.findIndex(t => t.id === id);
