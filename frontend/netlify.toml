@@ -5,4 +5,4 @@
   command = "npm run build"
 
   # This is where the files end up (Change 'dist' to 'build' if using Create-React-App)
-  publish = "frontend/build"
+  publish = "frontend/dist"
