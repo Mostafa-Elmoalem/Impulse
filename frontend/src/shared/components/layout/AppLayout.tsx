@@ -2,8 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { Footer } from './Footer'; // ✅ Import Footer
-import { ProgressBar } from '../ui/ProgressBar';
+import { Footer } from './Footer'; 
 import { TaskFormModal } from '@/features/tasks/components/TaskFormModal';
 import { GlobalTaskCompletion } from '@/features/tasks/components/GlobalTaskCompletion';
 import { useUIStore } from '@/shared/stores/useUIStore';
@@ -12,16 +11,13 @@ import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { cn } from '@/shared/utils/cn';
 
 export const AppLayout = () => {
-  const { isTaskModalOpen, closeTaskModal, isSidebarCollapsed } = useUIStore();
+  // ✅ استدعاء taskToEdit من الـ Store
+  const { isTaskModalOpen, closeTaskModal, isSidebarCollapsed, taskToEdit } = useUIStore();
   
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.DASHBOARD_STATS,
     queryFn: getDashboardStats,
   });
-
-  const score = stats?.dailyScore || 0;
-  const target = stats?.dailyTarget || 100;
-  const progressPercentage = (score / target) * 100;
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark transition-colors flex relative isolate">
@@ -35,32 +31,33 @@ export const AppLayout = () => {
         isSidebarCollapsed ? "md:pl-[80px]" : "md:pl-[280px]"
       )}>
         
-        {/* Header */}
+        {/* Header (Progress Bar Style) */}
         <Header />
-
-        {/* Progress Bar */}
-        <div className="w-full px-4 md:px-8 mt-4 relative ">
-           <ProgressBar progress={Math.round(progressPercentage)} />
-        </div>
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-8 pt-4 max-w-7xl mx-auto w-full animate-fade-in relative z-0">
           <Outlet />
         </main>
 
-        {/* ✅ Footer Component */}
+        {/* Footer */}
         <Footer />
 
       </div>
 
-      {/* Global Modals */}
+      {/* --- Global Modals --- */}
+      
+      {/* 1. Task Form (Create & Edit) */}
       <div className="relative z-[1200]">
         <TaskFormModal 
           isOpen={isTaskModalOpen} 
           onClose={closeTaskModal} 
+          // ⚠️ هذا السطر هو المسؤول عن تفعيل وضع التعديل
+          // إذا كان taskToEdit موجوداً، سيفتح الفورم في وضع التعديل
+          task={taskToEdit || undefined} 
         />
       </div>
 
+      {/* 2. Task Completion Popup */}
       <div className="relative z-[1300]">
         <GlobalTaskCompletion />
       </div>

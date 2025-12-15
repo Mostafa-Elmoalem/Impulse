@@ -1,13 +1,14 @@
 import { create } from 'zustand';
-import { Task } from '@/features/tasks/types'; // تأكد من استيراد النوع
+import { Task } from '@/features/tasks/types';
 
 interface UIState {
   // Task Form Modal
   isTaskModalOpen: boolean;
-  openTaskModal: () => void;
+  taskToEdit: Task | null; // ✅ Added to hold the task being edited
+  openTaskModal: (task?: Task) => void; // ✅ Accept optional task
   closeTaskModal: () => void;
 
-  // Task Completion Modal (NEW)
+  // Task Completion Modal
   taskToComplete: Task | null;
   setTaskToComplete: (task: Task | null) => void;
 
@@ -25,10 +26,11 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   isTaskModalOpen: false,
-  openTaskModal: () => set({ isTaskModalOpen: true }),
-  closeTaskModal: () => set({ isTaskModalOpen: false }),
+  taskToEdit: null,
+  // ✅ If a task is passed, save it. Otherwise set to null (Create mode)
+  openTaskModal: (task) => set({ isTaskModalOpen: true, taskToEdit: task || null }),
+  closeTaskModal: () => set({ isTaskModalOpen: false, taskToEdit: null }),
 
-  // Completion Logic
   taskToComplete: null,
   setTaskToComplete: (task) => set({ taskToComplete: task }),
 
