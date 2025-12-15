@@ -1,8 +1,9 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass, X, BookOpen, Quote } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutGrid, ListTodo, CheckCircle2, Clock, Zap, Hourglass, X, BookOpen, Quote, LogOut } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { DashboardStats } from '@/features/dashboard/api/dashboardApi';
 import { useUIStore } from '@/shared/stores/useUIStore';
+import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 
 interface SidebarProps {
   stats?: DashboardStats;
@@ -10,6 +11,8 @@ interface SidebarProps {
 
 export const Sidebar = ({ stats }: SidebarProps) => {
   const { isSidebarOpen, closeSidebar, isSidebarCollapsed } = useUIStore();
+  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
 
   const doneCount = stats?.completedTasks || 0;
   const pendingCount = stats?.pendingTasks || 0;
@@ -24,6 +27,11 @@ export const Sidebar = ({ stats }: SidebarProps) => {
     { icon: LayoutGrid, label: 'Overview', path: '/dashboard' },
     { icon: ListTodo, label: 'To-Do List', path: '/tasks' },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <>
@@ -202,6 +210,29 @@ export const Sidebar = ({ stats }: SidebarProps) => {
             </div>
           )}
         </div>
+
+        {/* --- Sign Out Button (New) --- */}
+        <div className="p-3 mt-auto border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={handleLogout}
+              className={cn(
+                "flex items-center w-full rounded-xl transition-all duration-200 group font-medium text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10",
+                isSidebarCollapsed ? "justify-center py-3 px-0" : "gap-3 px-3 py-2.5"
+              )}
+              title="Sign Out"
+            >
+              <LogOut 
+                size={22} 
+                className="transition-transform group-hover:scale-110 opacity-80 group-hover:opacity-100" 
+              />
+              <span className={cn(
+                "whitespace-nowrap transition-all duration-200",
+                isSidebarCollapsed ? "hidden w-0 opacity-0" : "block w-auto opacity-100"
+              )}>
+                Sign Out
+              </span>
+            </button>
+         </div>
         
       </aside>
     </>

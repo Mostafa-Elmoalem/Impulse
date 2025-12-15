@@ -19,8 +19,6 @@ export const useAuthStore = create<AuthState>()(
 
       login: (token: string, email: string, roles: string[]) => {
         try {
-          // ✅ FIXED: Added safety check for token decoding
-          // Backend JwtTokenHandler sets subject as the name
           const payload = JSON.parse(atob(token.split('.')[1]));
           const name = payload.sub || email.split('@')[0]; 
 
