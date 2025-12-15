@@ -1,20 +1,33 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTask, updateTask, deleteTask } from '../api/taskApi';
-import { QUERY_KEYS } from '@/shared/constants/queryKeys';
-import { toast } from 'sonner';
-import type { Task } from '../types';
-import { handleApiError } from '@/shared/utils/errorHandler';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as api from '../api/taskApi';
+import { Task, SubTask } from '../types';
+
+const QUERY_KEYS = {
+  TASKS: 'tasks',
+  POINTS: 'points',
+};
+
+export const useTasks = (date: Date) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.TASKS, date],
+    queryFn: () => api.getTasks(date),
+  });
+};
 
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createTask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
-      toast.success('Task created successfully!');
+    mutationFn: (newTask: Partial<Task>) => {
+      if (newTask.type === 'big_task') {
+         return api.createBigTask(newTask as Task);
+      }
+      return api.createTask(newTask);
     },
-    onError: (error) => handleApiError(error, 'Failed to create task'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.POINTS] });
+    },
   });
 };
 
@@ -22,61 +35,63 @@ export const useUpdateTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: number; updates: Partial<Task> }) =>
-      updateTask({ id, updates }), // ✅ Fixed call signature
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_STATS });
-      toast.success('Task updated successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to update task');
-    },
-  });
-};
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+      
+      const tasks = queryClient.getQueryData<Task[]>([QUERY_KEYS.TASKS, /* التاريخ هنا مشكلة بسيطة، هنفترض اننا في نفس الصفحة */]) 
+         || queryClient.getQueriesData({ queryKey: [QUERY_KEYS.TASKS] }).map(q => q[1]).flat(); // بحث عميق في كل الكاش
 
-export const useDeleteTask = () => {
-  const queryClient = useQueryClient();
+      // @ts-ignore
+      const currentTask = tasks?.find((t: Task) => t.id == id); // == عشان لو string/number
 
-  return useMutation({
-    mutationFn: deleteTask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_STATS });
-      toast.success('Task deleted successfully!');
+      if (!currentTask) {
+        throw new Error("Task not found in cache! Cannot update safely.");
+      }
+
+      const fullTask = { ...currentTask, ...updates };
+      return api.updateTask(fullTask as Task);
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to delete task');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.POINTS] });
     },
   });
 };
 
 export const useToggleTaskDone = () => {
-  const queryClient = useQueryClient();
+  const updateTask = useUpdateTask();
+  return {
+    mutate: ({ id, done }: { id: string; done: boolean }) => {
+      updateTask.mutate({ id, updates: { done } });
+    }
+  };
+};
 
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, done }: { id: number; done: boolean }) =>
-      updateTask({ id, updates: { done } }), // ✅ Fixed call signature
-    onMutate: async ({ id, done }) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.TASKS });
-      const previousTasks = queryClient.getQueryData<Task[]>(QUERY_KEYS.TASKS);
-      
-      queryClient.setQueryData<Task[]>(QUERY_KEYS.TASKS, (old) =>
-        old?.map((task) => (task.id === id ? { ...task, done } : task))
-      );
-      
-      return { previousTasks };
+    mutationFn: (id: string) => api.deleteTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.POINTS] });
     },
-    // ✅ Removed unused variables (error, variables)
-    onError: (_error, _variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(QUERY_KEYS.TASKS, context.previousTasks);
-      }
-      toast.error('Failed to update task');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TASKS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD_STATS });
+  });
+};
+
+export const usePoints = () => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.POINTS],
+    queryFn: api.getPoints,
+  });
+};
+
+// 7. هوك حذف مهمة فرعية
+export const useDeleteSubTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteSubTask(id),
+    onSuccess: () => {
+      // تحديث المهام عشان تختفي المهمة الفرعية
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TASKS] });
     },
   });
 };

@@ -1,101 +1,101 @@
-import type { Task } from '../types';
+import { apiClient } from '@/shared/api/apiClient';
+import { Task, SubTask } from '../types';
+import { format } from 'date-fns';
 
-// Key for storing data in browser
-const STORAGE_KEY = 'impulse_tasks_db';
-
-// Helper to simulate delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper to get data
-const getLocalTasks = (): Task[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+export const getTasks = async (date: Date = new Date()): Promise<Task[]> => {
+  const dateStr = format(date, 'yyyy-MM-dd');
+  const response = await apiClient.get(`/task/get-task/date/${dateStr}`);
+  return response.data;
 };
 
-// Helper to save data
-const saveLocalTasks = (tasks: Task[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-};
-
-export const getTasks = async (): Promise<Task[]> => {
-  await delay(400); // Fast load
-  const tasks = getLocalTasks();
-  
-  // If empty, return some dummy data to start
-  if (tasks.length === 0) {
-    const dummyTasks: Task[] = [
-      {
-        id: 1,
-        name: "Welcome to Impulse",
-        description: "This is a local task. Try editing or deleting it!",
-        day: new Date().toISOString().split('T')[0],
-        priority: "high",
-        done: false,
-        expectedTime: 30,
-        points: 10,
-        type: 'regular', // ✅ Added missing field
-        createdAt: Date.now() // ✅ Added missing field
-      },
-      {
-        id: 2,
-        name: "Try Dark Mode",
-        description: "Click the moon icon in the header.",
-        day: new Date().toISOString().split('T')[0],
-        priority: "medium",
-        done: true,
-        expectedTime: 15,
-        points: 5,
-        type: 'regular', // ✅ Added missing field
-        createdAt: Date.now() // ✅ Added missing field
-      }
-    ];
-    saveLocalTasks(dummyTasks);
-    return dummyTasks;
-  }
-  
-  return tasks;
-};
-
-export const createTask = async (data: Partial<Task>): Promise<Task> => {
-  await delay(600);
-  const tasks = getLocalTasks();
-  
-  const newTask: Task = {
-    id: Date.now(),
-    name: data.name || 'New Task',
-    description: data.description || '',
-    day: data.day || new Date().toISOString().split('T')[0],
-    priority: data.priority || 'medium',
+export const createTask = async (taskData: Partial<Task>): Promise<Task> => {
+  const payload = {
+    name: taskData.name,
+    description: taskData.description,
+    day: taskData.day, 
+    startTime: taskData.startTime,
+    endTime: taskData.endTime,
+    priority: taskData.priority?.toUpperCase(),
     done: false,
-    expectedTime: data.expectedTime || 60,
-    points: 10,
-    type: data.type || 'regular', // ✅ Ensure fallback to 'regular' if undefined
-    createdAt: Date.now(),
-    subTasks: data.subTasks || [],
-    ...data
+    points: taskData.points || 10
+  };
+  
+  const response = await apiClient.post('/task/add', payload);
+  return response.data;
+};
+
+export const createBigTask = async (taskData: Task): Promise<Task> => {
+  const payload = {
+    task: {
+       name: taskData.name,
+       description: taskData.description,
+       day: taskData.day,
+       startTime: taskData.startTime,
+       endTime: taskData.endTime,
+       priority: taskData.priority?.toUpperCase(),
+       points: taskData.points || 30
+    },
+    subTasks: taskData.subTasks?.map(sub => ({
+        name: sub.name,
+        time: sub.timeEstimate,
+        done: false
+    }))
   };
 
-  tasks.push(newTask);
-  saveLocalTasks(tasks);
-  return newTask;
+  const response = await apiClient.post('/task/add-big-task', payload);
+  const resData = response.data;
+  return { ...resData.task, subTasks: resData.subTasks };
 };
 
-export const updateTask = async ({ id, updates }: { id: number; updates: Partial<Task> }): Promise<Task> => {
-  await delay(300);
-  const tasks = getLocalTasks();
-  const index = tasks.findIndex(t => t.id === id);
-  
-  if (index === -1) throw new Error("Task not found");
+export const updateTask = async (task: Task): Promise<Task> => {
+  const payload = {
+    ...task,
+    priority: task.priority?.toUpperCase(),
+    subTasks: task.subTasks?.map(sub => ({
+      id: sub.id,
+      name: sub.name,
+      time: sub.timeEstimate, 
+      done: sub.isCompleted
+    }))
+  };
 
-  tasks[index] = { ...tasks[index], ...updates };
-  saveLocalTasks(tasks);
-  
-  return tasks[index];
+  const response = await apiClient.post('/task/update', payload);
+  return response.data;
 };
 
-export const deleteTask = async (id: number): Promise<void> => {
-  await delay(300);
-  const tasks = getLocalTasks();
-  const filtered = tasks.filter(t => t.id !== id);
-  saveLocalTasks(filtered);
+export const deleteTask = async (id: string): Promise<void> => {
+  await apiClient.delete('/task/delete', {
+    data: { id: id } 
+  });
+};
+
+export const updateSubTask = async (subTask: SubTask): Promise<SubTask> => {
+  const payload = {
+    id: subTask.id,
+    name: subTask.name,
+    time: subTask.timeEstimate,
+    done: subTask.isCompleted
+  };
+  
+  const response = await apiClient.post('/sub-task/update', payload);
+  
+  const data = response.data;
+  return {
+      id: data.id,
+      name: data.name,
+      timeEstimate: data.time,
+      isCompleted: data.done
+  };
+};
+
+export const getPoints = async (): Promise<number> => {
+  const response = await apiClient.get('/task/points');
+  return response.data;
+};
+
+// --- 8. حذف مهمة فرعية (DELETE SubTask) ---
+export const deleteSubTask = async (id: string): Promise<void> => {
+  await apiClient.delete('/sub-task/delete', {
+    data: { id: id }
+  });
 };

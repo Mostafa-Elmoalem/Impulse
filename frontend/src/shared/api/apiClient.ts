@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// سيقرأ الرابط من ملف .env الذي أنشأته للتو
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const apiClient = axios.create({
@@ -9,18 +10,11 @@ export const apiClient = axios.create({
   },
 });
 
+// إضافة التوكن تلقائياً لكل الطلبات
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); 
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
