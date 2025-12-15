@@ -1,36 +1,35 @@
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskType = 'regular' | 'big_task'; // Changed from 'project'
+export type TaskType = 'regular' | 'big_task';
 
 export interface SubTask {
   id: string;
   name: string;
   isCompleted: boolean;
-  timeEstimate?: number; // minutes
+  timeEstimate?: number;
 }
 
 export interface Task {
   id: number;
   name: string;
   description?: string;
-  day: string; // ISO Date string
+  day: string;
   
-  // Time Blocking
-  startTime?: string; // "HH:mm" 24h format
-  endTime?: string;   // "HH:mm" 24h format
+  // Planned Time
+  startTime?: string; // "HH:mm"
+  endTime?: string;   // "HH:mm"
   
   priority: Priority;
   type: TaskType;
   done: boolean;
   
-  /** Expected time in minutes (Calculated from start/end) */
-  expectedTime: number;
+  expectedTime: number; // minutes
   
-  /** Actual time spent in minutes */
-  actualTime?: number;
+  // Actual Performance
+  actualTime?: number;      // minutes duration
+  actualStartTime?: string; // [NEW] "HH:mm"
+  actualEndTime?: string;   // [NEW] "HH:mm"
   
-  /** Points earned upon completion */
   points: number;
-  
   subTasks?: SubTask[];
   
   createdAt: number;

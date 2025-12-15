@@ -10,13 +10,16 @@ export const GlobalTaskCompletion = () => {
     setTaskToComplete(null);
   };
 
-  const handleConfirm = (actualTime: number, points: number) => {
+  // ✅ Updated handler
+  const handleConfirm = (actualTime: number, points: number, start: string, end: string) => {
     if (taskToComplete) {
       updateTask.mutate({
         id: taskToComplete.id,
         updates: {
           done: true,
           actualTime: actualTime,
+          actualStartTime: start,
+          actualEndTime: end,
           points: points,
           completedAt: Date.now(),
         },

@@ -5,7 +5,7 @@ import { Task } from '../types';
 import { cn } from '@/shared/utils/cn';
 import { format, differenceInMinutes, parse, addMinutes } from 'date-fns';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
-import { calculateTaskPoints, getPointsBreakdown } from '../utils/scoringUtils';
+import { getPointsBreakdown } from '../utils/scoringUtils';
 
 // Sub-components
 import { VictoryOverlay } from './completion/VictoryOverlay';
@@ -16,7 +16,8 @@ import { ScoreBreakdown } from './completion/ScoreBreakdown';
 interface TaskCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (actualTime: number, points: number) => void; // Updated signature
+  // ✅ Updated signature to accept time strings
+  onConfirm: (actualTime: number, points: number, start: string, end: string) => void;
   task: Task;
 }
 
@@ -67,10 +68,8 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
   const actualDuration = calculateDuration();
   const timeDiff = task.expectedTime - actualDuration;
 
-  // Use the new centralized scoring logic
   const pointsData = getPointsBreakdown(task, actualDuration);
 
-  // Animations
   const handleConfirm = () => {
     setShowVictory(true);
     let start = 0;
@@ -100,19 +99,17 @@ export const TaskCompletionModal: React.FC<TaskCompletionModalProps> = ({
         "relative bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in border border-gray-200 dark:border-gray-800 flex flex-col max-h-[90vh]",
       )}>
         
-        {/* Victory Screen - Passes the FINAL Calculated Points */}
         {showVictory && (
           <VictoryOverlay 
-            points={pointsData.total} 
+            points={displayedPoints}
             basePoints={pointsData.base}
             bonusPoints={pointsData.bonus}
             timeDiff={timeDiff} 
             remainingTasks={remainingTasks}
-            onContinue={() => onConfirm(actualDuration, pointsData.total)} 
+            onContinue={() => onConfirm(actualDuration, pointsData.total, startTime, endTime)} 
           />
         )}
 
-        {/* Content */}
         <CompletionHeader taskName={task.name} onClose={onClose} />
 
         <div className="p-6 space-y-6 overflow-y-auto">

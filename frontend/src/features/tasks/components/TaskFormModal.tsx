@@ -1,21 +1,19 @@
 import React, { useEffect } from 'react';
-import { useForm, FormProvider, SubmitHandler } from 'react-hook-form'; // ✅ Added SubmitHandler
+import { useForm, FormProvider, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X } from 'lucide-react'; // ✅ Removed unused icons
+import { X, Layers, CheckSquare } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
 import { useCreateTask, useUpdateTask } from '../hooks/useTasks';
 import type { Task } from '../types';
 import { cn } from '@/shared/utils/cn';
-import { format, addMinutes, differenceInMinutes, parse } from 'date-fns';
+import { format, addMinutes, differenceInMinutes, parse, isValid } from 'date-fns';
 
-// Sub-components
 import { TaskHeader } from './form/TaskHeader';
 import { TaskScheduling } from './form/TaskScheduling';
 import { TaskPriority } from './form/TaskPriority';
 import { TaskSubtasks } from './form/TaskSubtasks';
 
-// --- Validation Schema ---
 const taskSchema = z.object({
   name: z.string().min(1, 'Task title is required'),
   description: z.string().optional(),
@@ -26,7 +24,8 @@ const taskSchema = z.object({
   type: z.enum(['regular', 'big_task']),
   subTasks: z.array(z.object({
     name: z.string().optional(), 
-    isCompleted: z.boolean().default(false)
+    isCompleted: z.boolean().default(false),
+    timeEstimate: z.coerce.number().min(1).default(30)
   })).optional()
 });
 
@@ -54,7 +53,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const defaultEnd = format(addMinutes(now, 60), 'HH:00');
 
   const methods = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema) as any, // ✅ Cast to any to bypass strict type check conflict
+    resolver: zodResolver(taskSchema) as any,
     defaultValues: {
       name: '',
       description: '',
@@ -69,8 +68,26 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const { reset, handleSubmit, setValue, watch } = methods;
   const taskType = watch('type');
+  const startTime = watch('startTime');
+  const subTasks = watch('subTasks');
 
-  // Load task data when editing
+  // Auto-Calculate End Time
+  useEffect(() => {
+    if (taskType === 'big_task' && subTasks) {
+      const validSubTasks = subTasks.filter(st => st.name && st.name.trim().length > 0);
+      const totalMinutes = validSubTasks.reduce((acc, curr) => acc + (curr.timeEstimate || 0), 0);
+      const durationToAdd = totalMinutes > 0 ? totalMinutes : 30; 
+
+      if (startTime) {
+        const startDate = parse(startTime, 'HH:mm', new Date());
+        if (isValid(startDate)) {
+          const endDate = addMinutes(startDate, durationToAdd);
+          setValue('endTime', format(endDate, 'HH:mm'));
+        }
+      }
+    }
+  }, [taskType, subTasks, startTime, setValue]);
+
   useEffect(() => {
     if (isOpen) {
       if (task) {
@@ -82,7 +99,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           type: task.type || 'regular',
           startTime: task.startTime || defaultStart,
           endTime: task.endTime || defaultEnd,
-          subTasks: task.subTasks?.map(st => ({ name: st.name, isCompleted: st.isCompleted })) || []
+          subTasks: task.subTasks?.map(st => ({ 
+            name: st.name, 
+            isCompleted: st.isCompleted,
+            timeEstimate: st.timeEstimate || 30
+          })) || []
         });
       } else {
         reset({
@@ -97,7 +118,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         });
       }
     }
-  }, [isOpen, task, initialDate, reset]); // Removed defaultStart/End from deps to avoid loop
+  }, [isOpen, task, initialDate, reset]);
 
   const calculateDuration = (start: string, end: string) => {
     try {
@@ -111,13 +132,13 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const onSubmit: SubmitHandler<TaskFormValues> = async (data) => {
     try {
-      // Filter empty subtasks
       const validSubTasks = data.subTasks
         ?.filter(st => st.name && st.name.trim().length > 0)
         .map(st => ({
           id: crypto.randomUUID(),
           isCompleted: false,
-          name: st.name!
+          name: st.name!,
+          timeEstimate: st.timeEstimate || 30
         }));
 
       const formattedData: any = {
@@ -145,7 +166,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-scale-in flex flex-col border border-gray-100 dark:border-gray-800">
         
-        {/* Modal Header */}
         <div className="flex items-center justify-end px-4 py-3">
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors">
             <X size={20} />
@@ -157,51 +177,53 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <form id="task-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               
               <TaskHeader />
-              <TaskScheduling />
-              <TaskPriority />
 
-              <div className="pt-2">
-                 <div className="flex items-center gap-4 mb-4">
-                    <button
-                       type="button"
-                       onClick={() => setValue('type', 'regular')}
-                       className={cn(
-                         "flex items-center gap-2 text-sm font-semibold transition-colors",
-                         taskType === 'regular' ? "text-gray-900 dark:text-white" : "text-gray-400 hover:text-gray-600"
-                       )}
-                    >
-                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", taskType === 'regular' ? "border-brand-600" : "border-gray-300")}>
-                         {taskType === 'regular' && <div className="w-2 h-2 bg-brand-600 rounded-full" />}
-                      </div>
-                      Regular Task
-                    </button>
+              <div className="grid grid-cols-2 gap-3 p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
+                <button
+                    type="button"
+                    onClick={() => setValue('type', 'regular')}
+                    className={cn(
+                      "flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wide rounded-lg transition-all duration-200",
+                      taskType === 'regular' 
+                        ? "bg-white dark:bg-gray-700 text-brand-600 shadow-sm ring-1 ring-black/5" 
+                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    )}
+                >
+                  <CheckSquare size={16} /> Regular Task
+                </button>
 
-                    <button
-                       type="button"
-                       onClick={() => setValue('type', 'big_task')}
-                       className={cn(
-                         "flex items-center gap-2 text-sm font-semibold transition-colors",
-                         taskType === 'big_task' ? "text-purple-600" : "text-gray-400 hover:text-gray-600"
-                       )}
-                    >
-                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", taskType === 'big_task' ? "border-purple-600" : "border-gray-300")}>
-                         {taskType === 'big_task' && <div className="w-2 h-2 bg-purple-600 rounded-full" />}
-                      </div>
-                      Big Task
-                    </button>
-                 </div>
-
-                 {taskType === 'big_task' && <TaskSubtasks />}
+                <button
+                    type="button"
+                    onClick={() => setValue('type', 'big_task')}
+                    className={cn(
+                      "flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-wide rounded-lg transition-all duration-200",
+                      taskType === 'big_task' 
+                        ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm ring-1 ring-black/5" 
+                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    )}
+                >
+                  <Layers size={16} /> Big Task (Project)
+                </button>
               </div>
+
+              {taskType === 'big_task' && (
+                <div className="animate-slide-in-up">
+                  <TaskSubtasks />
+                </div>
+              )}
+
+              {/* ✅ Just pass the prop, no messy layout here */}
+              <TaskScheduling isAutoScheduled={taskType === 'big_task'} />
+
+              <TaskPriority />
 
             </form>
           </FormProvider>
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/30">
           <span className="text-xs text-gray-400 font-medium hidden sm:block">
-            {taskType === 'big_task' ? 'Press Enter to add next step' : ''}
+            {taskType === 'big_task' ? '✨ Smart duration tracking active' : 'Standard time block'}
           </span>
           <div className="flex gap-3 w-full sm:w-auto justify-end">
             <Button variant="ghost" onClick={onClose} size="sm" className="text-gray-500">Cancel</Button>
@@ -212,7 +234,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               size="sm" 
               className="px-8 shadow-lg shadow-brand-500/20 rounded-xl"
             >
-              {isEditing ? 'Save' : 'Create'}
+              {isEditing ? 'Save Changes' : 'Create Task'}
             </Button>
           </div>
         </div>

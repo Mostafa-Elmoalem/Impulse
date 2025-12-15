@@ -7,7 +7,7 @@ import { TaskItem } from '../components/TaskItem';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useDateStore } from '@/shared/stores/useDateStore';
 import { useUIStore } from '@/shared/stores/useUIStore';
-import { format, isSameDay, isValid } from 'date-fns'; // ✅ Removed parseISO
+import { format, isSameDay, isValid } from 'date-fns';
 
 export const TasksPage = () => {
   const { selectedDate } = useDateStore();
@@ -52,6 +52,7 @@ export const TasksPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-end justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -73,7 +74,8 @@ export const TasksPage = () => {
         </div>
       </div>
 
-      <div className="space-y-3 min-h-[300px]">
+      {/* List / Grid */}
+      <div className="min-h-[300px]">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -104,9 +106,17 @@ export const TasksPage = () => {
             )}
           </div>
         ) : (
-          filteredTasks.map((task) => (
-            <TaskItem key={task.id} task={task} />
-          ))
+          // ✅ GRID LAYOUT
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            {filteredTasks.map((task) => (
+              <TaskItem 
+                key={task.id} 
+                task={task} 
+                // Big Tasks take full width, Regulars take 1 column
+                className={task.type === 'big_task' ? 'col-span-1 md:col-span-2' : ''}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
