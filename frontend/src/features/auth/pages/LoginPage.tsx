@@ -57,27 +57,36 @@ export const LoginPage = () => {
   // 1. معالجة تسجيل الدخول
   const onLogin = async (data: any) => {
     try {
+      console.log('Attempting login with:', data.email); // للتجربة
       const response = await loginWithEmail(data);
-      login(response.token, data.email, response.roles);
+      
+      // تخزين التوكن والبيانات في الستور
+      // تأكد أن response.token و response.roles موجودة
+      login(response.token, data.email, response.roles || ['USER']);
+      
       toast.success('Welcome back!');
-      navigate('/tasks'); // التوجيه للصفحة الرئيسية
+      navigate('/dashboard'); // توجيه للوحة التحكم مباشرة
     } catch (error: any) {
-      console.error(error);
-      toast.error('Login failed. Please check your credentials.');
+      console.error('Login Error:', error);
+      // عرض رسالة الخطأ القادمة من الباك إند (الإنجليزية أو العربية)
+      const msg = error.response?.data?.messageEn || error.response?.data?.messageAr || 'Login failed. Please check your credentials.';
+      toast.error(msg);
     }
   };
 
-  // 2. معالجة إنشاء الحساب
   const onRegister = async (data: any) => {
     try {
+      console.log('Attempting register with:', data.email);
       const response = await registerWithEmail(data);
-      login(response.token, data.email, response.roles);
+      
+      // تسجيل الدخول مباشرة بعد إنشاء الحساب
+      login(response.token, data.email, response.roles || ['USER']);
+      
       toast.success('Account created successfully!');
-      navigate('/tasks');
+      navigate('/dashboard');
     } catch (error: any) {
-      console.error(error);
-      // عرض رسالة الخطأ القادمة من الباك إند (مثل: Email already exists)
-      const msg = error.response?.data?.messageEn || 'Registration failed';
+      console.error('Registration Error:', error);
+      const msg = error.response?.data?.messageEn || error.response?.data?.messageAr || 'Registration failed.';
       toast.error(msg);
     }
   };

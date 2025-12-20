@@ -1,30 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
+// import { useQuery } from '@tanstack/react-query'; // ❌ احذف هذا السطر أو لا تستخدمه
 import { CalendarDays, Inbox, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/Button';
-import { getTasks } from '../api/taskApi';
-import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+// import { getTasks } from '../api/taskApi'; // ❌ غير مطلوب لأن الهوك يستخدمه داخلياً
+// import { QUERY_KEYS } from '@/shared/constants/queryKeys'; // ❌ غير مطلوب هنا
 import { TaskItem } from '../components/TaskItem';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useDateStore } from '@/shared/stores/useDateStore';
 import { useUIStore } from '@/shared/stores/useUIStore';
 import { isSameDay, isValid } from 'date-fns';
 import { sortTasks } from '../utils/taskUtils';
+import { useTasks } from '../hooks/useTasks'; // ✅ تأكد من استيراد الهوك
 
 export const TasksPage = () => {
   const { selectedDate } = useDateStore();
-  const { searchQuery, openTaskModal } = useUIStore(); // openTaskModal can now take a task
+  const { searchQuery, openTaskModal } = useUIStore();
 
-  const { data: tasks = [], isLoading, isError } = useQuery({
-    queryKey: QUERY_KEYS.TASKS,
-    queryFn: getTasks,
-  });
+  // 👇 التعديل هنا: استخدام الهوك بدلاً من useQuery المباشر
+  // الهوك يضع التاريخ في الـ queryKey تلقائياً، فأي تغيير في التاريخ سيعيد الجلب
+  const { data: tasks = [], isLoading, isError } = useTasks(selectedDate);
 
+  // ... باقي الكود كما هو تماماً ...
   const filteredTasks = tasks.filter(task => {
     try {
       if (!task.day) return false;
       const taskDate = new Date(task.day);
       if (!isValid(taskDate)) return false;
+      
+      // ملاحظة: الفلترة هنا بالتاريخ قد تكون زائدة لأن الباك إند يفلتر بالفعل
+      // لكن لا ضرر من وجودها كضمان إضافي
       const matchesDate = isSameDay(taskDate, selectedDate);
+      
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         return task.name.toLowerCase().includes(query) || 
@@ -40,7 +45,7 @@ export const TasksPage = () => {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
         <AlertCircle size={40} className="text-red-500 mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Error loading tasks</h3>
         <p className="text-gray-500">Please try refreshing the page.</p>
@@ -86,8 +91,8 @@ export const TasksPage = () => {
               <TaskItem 
                 key={task.id} 
                 task={task} 
-                // ✅ Pass the edit handler here
                 onEdit={(t) => openTaskModal(t)}
+                // @ts-ignore
                 className={task.type === 'big_task' ? 'col-span-1 md:col-span-2' : ''}
               />
             ))}

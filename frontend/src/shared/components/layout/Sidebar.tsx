@@ -12,7 +12,6 @@ interface SidebarProps {
 export const Sidebar = ({ stats }: SidebarProps) => {
   const { isSidebarOpen, closeSidebar, isSidebarCollapsed } = useUIStore();
   const logout = useAuthStore((state) => state.logout);
-  const navigate = useNavigate();
 
   const doneCount = stats?.completedTasks || 0;
   const pendingCount = stats?.pendingTasks || 0;
@@ -30,7 +29,7 @@ export const Sidebar = ({ stats }: SidebarProps) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    window.location.href = '/login';
   };
 
   return (

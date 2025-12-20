@@ -1,37 +1,43 @@
-export type Priority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskType = 'regular' | 'big_task';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export interface SubTask {
-  id: string;
-  name: string;
+  id?: number | string;
+  title: string;
   isCompleted: boolean;
-  timeEstimate?: number;
+  taskId?: number | string;
 }
 
 export interface Task {
-  id: number;
+  id?: number | string;
   name: string;
   description?: string;
-  day: string;
   
-  // Planned Time
-  startTime?: string; // "HH:mm"
-  endTime?: string;   // "HH:mm"
+  day: Date; 
   
-  priority: Priority;
-  type: TaskType;
+  startTime?: Date;
+  endTime?: Date;
+  
+  // ✅ تعريف الحقول بدقة لتطابق الباك إند
+  actualStartTime?: Date;
+  actualendTime?: Date; 
+
+  priority: TaskPriority;
   done: boolean;
-  
-  expectedTime: number; // minutes
-  
-  // Actual Performance
-  actualTime?: number;      // minutes duration
-  actualStartTime?: string; // [NEW] "HH:mm"
-  actualEndTime?: string;   // [NEW] "HH:mm"
-  
   points: number;
-  subTasks?: SubTask[];
   
-  createdAt: number;
-  completedAt?: number;
+  subTasks: SubTask[];
+
+  // حقول للواجهة (Optional)
+  isTimeSet?: boolean;
+}
+
+export interface DragResult {
+  source: {
+    index: number;
+    droppableId: string;
+  };
+  destination?: {
+    index: number;
+    droppableId: string;
+  }; 
 }
